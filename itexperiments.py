@@ -110,6 +110,8 @@ def experiment(model_init_param:dict,
         data.edge_index = to_undirected(data.edge_index,num_nodes=data.num_nodes)
 
     device=torch.device('cuda:'+str(cuda_index) if torch.cuda.is_available() else "cpu")
+    #device='cpu'
+    #TODO:搞个use_cpu类似这样的参数？
     
     data=data.to(device)
 

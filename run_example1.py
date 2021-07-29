@@ -17,12 +17,12 @@ seeds=[random.randint(0,100000000) for i in range(seed_number)]
 
 file_handle=open('whj_code2/integration_experiment/run_example1_output.out',
                 mode='a')  #追加
-file_handle.write('调整全部模型后重运行，lr0.01+epoch300+10，有向图:\n')
+file_handle.write('GAT参数改为(8,8)→(_,1)，重新运行GAT模型，lr0.01+epoch300+10，无向图:\n')
 
 for dn in [0,2,3]:  #遍历数据集
     d=InitialParameters.dataset_name_root_map[dn]
     file_handle.write(d['dataset_name'])
-    for i in range(6):  #遍历模型
+    for i in [3]:  #遍历模型
         #print(d)
         #print(i)
         #上述两个主要可用于监测可能发生的在某一步报bug（比如GPU被挤出去了（help me））
@@ -32,7 +32,7 @@ for dn in [0,2,3]:  #遍历数据集
                 acc_dict=experiment(model_init_param=InitialParameters.default_init_params[i],
                                     dataset_split_seed=seed,
                                     model_name=InitialParameters.model_names[i],
-                                    to_undirected_graph=False,
+                                    to_undirected_graph=True,
                                     learning_rate=learning_rate,epoch=epoch,
                                     cuda_index=cuda_index,**d)
                 acc_list.append(acc_dict['ACC'])
@@ -47,7 +47,7 @@ for dn in [0,2,3]:  #遍历数据集
         acc_dict=experiment(model_init_param={'num_layers':3,'hidden_unit':64,'dropout_rate':0.5},
                             dataset_split_seed=seed,
                             model_name='MLP',
-                            to_undirected_graph=False,
+                            to_undirected_graph=True,
                             learning_rate=learning_rate,epoch=epoch,
                             post_cs=True,cs_param=InitialParameters.default_cs_param,
                             cuda_index=cuda_index,**d)

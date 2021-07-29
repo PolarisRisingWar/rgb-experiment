@@ -18,7 +18,7 @@ class GAT(nn.Module):
         self.convs.append(GATConv(input_dim,hidden_unit,heads))
         for i in range(num_layers-2):
             self.convs.append(GATConv(hidden_unit*heads,hidden_unit,heads))
-        self.convs.append(GATConv(hidden_unit*heads,output_dim,heads,concat=False))
+        self.convs.append(GATConv(hidden_unit*heads,output_dim,1,concat=False))
 
         self.bns=nn.ModuleList([nn.BatchNorm1d(hidden_unit*heads) for i in range(num_layers-1)])
 

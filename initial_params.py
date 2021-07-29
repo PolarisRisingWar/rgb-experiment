@@ -18,7 +18,7 @@ class InitialParameters:
     default_init_params=[{'num_layers': 3, 'hidden_unit': 64, 'dropout_rate': 0.5},
                         {'num_layers': 2, 'hidden_unit': 64, 'dropout_rate': 0.5},
                         {'num_layers': 2, 'hidden_unit': 64, 'dropout_rate': 0.5},
-                        {'num_layers': 2, 'hidden_unit': 64, 'dropout_rate': 0.5, 'heads': 1},
+                        {'num_layers': 2, 'hidden_unit': 8, 'dropout_rate': 0.5, 'heads': 8},
                         {'num_layers': 2, 'hidden_unit': 64, 'dropout_rate': 0.5},
                         {'hidden_unit': 64, 'dropout_rate': 0.5, 'alpha': 0.1, 'K': 10}]
     #APPNP的α和K都是原论文的设置
