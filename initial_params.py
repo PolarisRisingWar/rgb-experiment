@@ -20,7 +20,7 @@ class InitialParameters:
                         {'num_layers': 1, 'hidden_unit': 64, 'dropout_rate': 0.5},
                         {'num_layers': 2, 'hidden_unit': 64, 'dropout_rate': 0.5, 'heads': 1},
                         {'num_layers': 2, 'hidden_unit': 64, 'dropout_rate': 0.5},
-                        {'num_layers': 1, 'hidden_unit': 64, 'dropout_rate': 0.5, 'alpha': 0.1, 'K': 10}]
+                        {'hidden_unit': 64, 'dropout_rate': 0.5, 'alpha': 0.1, 'K': 10}]
     #APPNP的α和K都是原论文的设置
 
     default_cs_param={'num_correction_layers': 50, 'correction_alpha': 0.8, 'num_smoothing_layers': 50, 'smoothing_alpha': 0.8, 'autoscale': True}

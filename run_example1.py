@@ -16,7 +16,7 @@ seeds=[random.randint(0,100000000) for i in range(seed_number)]
 
 file_handle=open('whj_code2/integration_experiment/run_example1_output.out',
                 mode='a')  #追加
-file_handle.write('修改APPNP和C&S的参数，lr0.01+epoch300+10，转换为无向图:\n')
+file_handle.write('修改APPNP模型（结果应该与之前的写法相同或近似），lr0.01+epoch300+10，转换为无向图:\n')
 
 for dn in range(6):  #遍历数据集
     d=InitialParameters.dataset_name_root_map[dn]
@@ -37,6 +37,7 @@ for dn in range(6):  #遍历数据集
         file_handle.write('\t'+str(round(sum(acc_list)/seed_number,3)))
     
     #MLP+C&S
+    #"""
     acc_list=[]
     for seed in seeds:  #遍历seed_number次数据集划分
         acc_dict=experiment(model_init_param={'num_layers':3,'hidden_unit':64,'dropout_rate':0.5},
@@ -48,6 +49,7 @@ for dn in range(6):  #遍历数据集
                             cuda_index=cuda_index,**d)
         acc_list.append(acc_dict['ACC'])
     file_handle.write('\t'+str(round(sum(acc_list)/seed_number,3)))
+    #"""
 
     file_handle.write('\n')
         

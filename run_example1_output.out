@@ -16,3 +16,11 @@ Film	0.306	0.236
 CiteSeer	0.752	0.763
 PubMed	0.876	0.887
 
+dataset_name    APPNP
+修改APPNP模型（结果应该与之前的写法相同或近似），lr0.01+epoch300+10，转换为无向图:
+Github	0.862
+cora	0.88
+Elliptic	0.942
+Film	0.311
+CiteSeer	0.751
+PubMed	0.878
