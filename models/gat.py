@@ -21,6 +21,12 @@ class GAT(nn.Module):
         self.bns=nn.ModuleList([nn.BatchNorm1d(hidden_unit*heads) for i in range(num_layers)])
 
         self.lin=nn.Linear(hidden_unit*heads,output_dim)
+        #这个线性层是用来转换维度的，参考cs224w的实现。可参考：
+        #https://blog.csdn.net/PolarisRisingWar/article/details/118545695
+        #然后我看了一下PyG官方这个：
+        #https://github.com/rusty1s/pytorch_geometric/blob/e6b8d6427ad930c6117298006d7eebea0a37ceac/examples/ogbn_products_gat.py
+        #是叠了一层concat=False的GATConv
+        #都行吧大概
     
     def forward(self,x,edge_index):
         for i in range(self.num_layers):
@@ -29,7 +35,5 @@ class GAT(nn.Module):
             #x=F.relu(x)
             x=F.dropout(x,p=self.dropout_rate,training=self.training)
         x=self.lin(x)
-        #x=F.relu(x)
-        #x=F.dropout(x,p=self.dropout_rate,training=self.training)
         
         return {'out':F.log_softmax(x, dim=1),'emb':x}

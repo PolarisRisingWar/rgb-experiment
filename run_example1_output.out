@@ -24,3 +24,11 @@ Elliptic	0.942
 Film	0.311
 CiteSeer	0.751
 PubMed	0.878
+
+照PyG官方实现改了遍APPNP，lr0.01+epoch300+10，转换为无向图:
+Github	0.867
+cora	0.876
+Elliptic	0.94
+Film	0.307
+CiteSeer	0.748
+PubMed	0.878

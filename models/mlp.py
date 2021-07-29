@@ -31,6 +31,5 @@ class MLP(nn.Module):
             #x=F.relu(x)
             x=F.dropout(x,p=self.dropout_rate,training=self.training)
         x=self.lins[self.num_layers-1](x)
-        #x=F.dropout(x,p=self.dropout_rate,training=self.training)
         
         return {'out':F.log_softmax(x, dim=1),'emb':x}

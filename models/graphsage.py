@@ -15,6 +15,7 @@ class GraphSAGE(nn.Module):
         self.dropout_rate=dropout_rate
 
         self.lin1=nn.Linear(input_dim,hidden_unit)
+        #之所以非要叠一层是因为GitHub数据集转无向图不知为啥就OOM了，要不然谁乐意干这种事
 
         self.convs=nn.ModuleList()
         for i in range(num_layers):
@@ -33,9 +34,7 @@ class GraphSAGE(nn.Module):
         for i in range(self.num_layers):
             x=self.convs[i](x,edge_index)
             x=self.bns[i+1](x)
-            #x=F.relu(x)
             x=F.dropout(x,p=self.dropout_rate,training=self.training)
         x=self.lin2(x)
-        #x=F.dropout(x,p=self.dropout_rate,training=self.training)
         
         return {'out':F.log_softmax(x, dim=1),'emb':x}
