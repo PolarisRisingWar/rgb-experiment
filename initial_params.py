@@ -20,6 +20,9 @@ class InitialParameters:
                         {'num_layers': 1, 'hidden_unit': 64, 'dropout_rate': 0.5},
                         {'num_layers': 2, 'hidden_unit': 64, 'dropout_rate': 0.5, 'heads': 1},
                         {'num_layers': 2, 'hidden_unit': 64, 'dropout_rate': 0.5},
-                        {'num_layers': 1, 'hidden_unit': 50, 'dropout_rate': 0.1, 'alpha': 0.4, 'K': 10}]
-    
-    default_cs_param={'num_correction_layers': 70, 'correction_alpha': 0.8, 'num_smoothing_layers': 50, 'smoothing_alpha': 0.9, 'autoscale': True}
+                        {'num_layers': 1, 'hidden_unit': 64, 'dropout_rate': 0.5, 'alpha': 0.1, 'K': 10}]
+    #APPNP的α和K都是原论文的设置
+
+    default_cs_param={'num_correction_layers': 50, 'correction_alpha': 0.8, 'num_smoothing_layers': 50, 'smoothing_alpha': 0.8, 'autoscale': True}
+    #参数参考自：
+    #https://github.com/rusty1s/pytorch_geometric/blob/master/examples/correct_and_smooth.py

@@ -16,12 +16,12 @@ seeds=[random.randint(0,100000000) for i in range(seed_number)]
 
 file_handle=open('whj_code2/integration_experiment/run_example1_output.out',
                 mode='a')  #追加
-file_handle.write('lr0.01+epoch300+10，转换为无向图:\n')
+file_handle.write('修改APPNP和C&S的参数，lr0.01+epoch300+10，转换为无向图:\n')
 
 for dn in range(6):  #遍历数据集
     d=InitialParameters.dataset_name_root_map[dn]
     file_handle.write(d['dataset_name'])
-    for i in range(6):  #遍历模型
+    for i in [5]:  #遍历模型
         #print(d)
         #print(i)
         #上述两个主要可用于监测可能发生的在某一步报bug（比如GPU被挤出去了（help me））
