@@ -19,19 +19,14 @@ class GCN(nn.Module):
         for i in range(num_layers-2):
             self.convs.append(GCNConv(hidden_unit,hidden_unit))
         self.convs.append(GCNConv(hidden_unit,output_dim))
-        #看官方实现：
-        #https://github.com/rusty1s/pytorch_geometric/blob/e6b8d6427ad930c6117298006d7eebea0a37ceac/benchmark/kernel/gcn.py
-        #这边和GAT的正好相反，绝了。
-        #其他示例：
-        #https://github.com/rusty1s/pytorch_geometric/blob/e6b8d6427ad930c6117298006d7eebea0a37ceac/benchmark/citation/gcn.py
 
-        self.bn=nn.BatchNorm1d(output_dim)
+        self.bns=nn.ModuleList([nn.BatchNorm1d(hidden_unit) for i in range(num_layers-1)])
     
     def forward(self,x,edge_index):
-        for i in range(self.num_layers):
+        for i in range(self.num_layers-1):
             x=self.convs[i](x,edge_index)
-        #x=self.bn(x)
-        #x=F.relu(x)
-        #x=F.dropout(x,p=self.dropout_rate,training=self.training)
+            x=self.bns[i](x)
+            x=F.dropout(x,p=self.dropout_rate,training=self.training)
+        x=self.convs[self.num_layers-1](x,edge_index)
         
         return {'out':F.log_softmax(x, dim=1),'emb':x}

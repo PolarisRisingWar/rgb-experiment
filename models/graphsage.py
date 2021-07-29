@@ -14,27 +14,19 @@ class GraphSAGE(nn.Module):
         self.num_layers=num_layers
         self.dropout_rate=dropout_rate
 
-        self.lin1=nn.Linear(input_dim,hidden_unit)
-        #之所以非要叠一层是因为GitHub数据集转无向图不知为啥就OOM了，要不然谁乐意干这种事
-
         self.convs=nn.ModuleList()
-        for i in range(num_layers):
+        self.convs.append(SAGEConv(input_dim,hidden_unit))
+        for i in range(num_layers-2):
             self.convs.append(SAGEConv(hidden_unit,hidden_unit))
+        self.convs.append(SAGEConv(hidden_unit,output_dim))
 
-        self.bns=nn.ModuleList()
-        for i in range(num_layers+1):
-            self.bns.append(nn.BatchNorm1d(hidden_unit))
-        
-        self.lin2=nn.Linear(hidden_unit,output_dim)
+        self.bns=nn.ModuleList([nn.BatchNorm1d(hidden_unit) for i in range(num_layers-1)])
     
     def forward(self,x,edge_index):
-        x=self.lin1(x)
-        x=self.bns[0](x)
-        x=F.dropout(x,p=self.dropout_rate,training=self.training)
-        for i in range(self.num_layers):
+        for i in range(self.num_layers-1):
             x=self.convs[i](x,edge_index)
-            x=self.bns[i+1](x)
+            x=self.bns[i](x)
             x=F.dropout(x,p=self.dropout_rate,training=self.training)
-        x=self.lin2(x)
+        x=self.convs[self.num_layers-1](x,edge_index)
         
         return {'out':F.log_softmax(x, dim=1),'emb':x}

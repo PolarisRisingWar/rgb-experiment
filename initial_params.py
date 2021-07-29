@@ -17,7 +17,7 @@ class InitialParameters:
     model_names=['MLP','GCN','GraphSAGE','GAT','GGNN','APPNPStack']
     default_init_params=[{'num_layers': 3, 'hidden_unit': 64, 'dropout_rate': 0.5},
                         {'num_layers': 2, 'hidden_unit': 64, 'dropout_rate': 0.5},
-                        {'num_layers': 1, 'hidden_unit': 64, 'dropout_rate': 0.5},
+                        {'num_layers': 2, 'hidden_unit': 64, 'dropout_rate': 0.5},
                         {'num_layers': 2, 'hidden_unit': 64, 'dropout_rate': 0.5, 'heads': 1},
                         {'num_layers': 2, 'hidden_unit': 64, 'dropout_rate': 0.5},
                         {'hidden_unit': 64, 'dropout_rate': 0.5, 'alpha': 0.1, 'K': 10}]
