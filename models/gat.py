@@ -27,7 +27,7 @@ class GAT(nn.Module):
         for i in range(self.num_layers-1):
             x=self.convs[i](x,edge_index)
             x=self.bns[i](x)
-            x=F.dropout(x,p=self.dropout_rate,training=self.training)
+            #x=F.dropout(x,p=self.dropout_rate,training=self.training)
         x=self.convs[self.num_layers-1](x,edge_index)
         
         return {'out':F.log_softmax(x, dim=1),'emb':x}

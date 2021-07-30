@@ -25,11 +25,11 @@ class GGNN(nn.Module):
         x=self.lin1(x)
         x=self.bn1(x)
         #x=F.relu(x)
-        x=F.dropout(x,self.dropout_rate,self.training)
+        #x=F.dropout(x,self.dropout_rate,self.training)
         x=self.conv(x,edge_index)
         x=self.bn2(x)
         #x=F.relu(x)
-        x=F.dropout(x,self.dropout_rate,self.training)
+        #x=F.dropout(x,self.dropout_rate,self.training)
         x=self.lin2(x)
         
         return {'out':F.log_softmax(x, dim=1),'emb':x}

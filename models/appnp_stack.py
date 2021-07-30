@@ -23,10 +23,10 @@ class APPNPStack(nn.Module):
 
     
     def forward(self,x,edge_index):
-        x=F.dropout(x,p=self.dropout_rate,training=self.training)
+        #x=F.dropout(x,p=self.dropout_rate,training=self.training)
         x=self.lin1(x)
         x=self.bn(x)
-        x=F.dropout(x,p=self.dropout_rate,training=self.training)
+        #x=F.dropout(x,p=self.dropout_rate,training=self.training)
         x=self.lin2(x)
         x=self.conv(x,edge_index)
         

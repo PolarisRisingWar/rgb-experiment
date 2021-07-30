@@ -29,7 +29,7 @@ class MLP(nn.Module):
             x=self.lins[i](x)
             x=self.bns[i](x)
             #x=F.relu(x)
-            x=F.dropout(x,p=self.dropout_rate,training=self.training)
+            #x=F.dropout(x,p=self.dropout_rate,training=self.training)
         x=self.lins[self.num_layers-1](x)
         
         return {'out':F.log_softmax(x, dim=1),'emb':x}

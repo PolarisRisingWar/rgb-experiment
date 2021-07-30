@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn.conv import SAGEConv
+from torch_geometric.nn.conv import MessagePassing
+from torch_geometric.utils import remove_self_loops, add_self_loops
 
 class GraphSAGE(nn.Module):
     """
@@ -15,10 +16,10 @@ class GraphSAGE(nn.Module):
         self.dropout_rate=dropout_rate
 
         self.convs=nn.ModuleList()
-        self.convs.append(SAGEConv(input_dim,hidden_unit))
+        self.convs.append(my_SAGEConv(input_dim,hidden_unit))
         for i in range(num_layers-2):
-            self.convs.append(SAGEConv(hidden_unit,hidden_unit))
-        self.convs.append(SAGEConv(hidden_unit,output_dim))
+            self.convs.append(my_SAGEConv(hidden_unit,hidden_unit))
+        self.convs.append(my_SAGEConv(hidden_unit,output_dim))
 
         self.bns=nn.ModuleList([nn.BatchNorm1d(hidden_unit) for i in range(num_layers-1)])
     
@@ -26,7 +27,34 @@ class GraphSAGE(nn.Module):
         for i in range(self.num_layers-1):
             x=self.convs[i](x,edge_index)
             x=self.bns[i](x)
-            x=F.dropout(x,p=self.dropout_rate,training=self.training)
+            #x=F.dropout(x,p=self.dropout_rate,training=self.training)
+            #x=F.relu(x)
         x=self.convs[self.num_layers-1](x,edge_index)
         
         return {'out':F.log_softmax(x, dim=1),'emb':x}
+
+class my_SAGEConv(MessagePassing):
+
+    def __init__(self, in_channels,out_channels,add_self_loops:bool = True,**kwargs):
+        kwargs.setdefault('aggr', 'mean')
+        super(my_SAGEConv, self).__init__(node_dim=0, **kwargs)
+
+        self.in_channels = in_channels
+        self.out_channels = out_channels
+        self.add_self_loops = add_self_loops
+
+        self.lin_l=nn.Linear(in_channels,out_channels)  #W_l，对中心节点应用
+        self.lin_r=nn.Linear(in_channels,out_channels)  #W_r，对邻居节点应用
+    
+    def forward(self, x, edge_index):
+        x_l = self.lin_l(x)
+        x_r = self.lin_r(x)
+
+        if self.add_self_loops:
+            num_nodes = x_l.size(0)
+            edge_index, _ = remove_self_loops(edge_index)
+            edge_index, _ = add_self_loops(edge_index, num_nodes=num_nodes)
+        
+        out = self.propagate(edge_index, x=(x_l, x_r))
+        
+        return out
