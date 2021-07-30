@@ -18,6 +18,8 @@ from sklearn import metrics
 
 import matplotlib.pyplot as plt
 
+from copy import deepcopy
+
 def experiment(model_init_param:dict,
                 task:str='node_prediction',
                 dataset_name:str='Github',
@@ -33,6 +35,7 @@ def experiment(model_init_param:dict,
                 learning_rate:int=0.1,
                 epoch:int=50,
                 early_stopping:int=10,
+                implement_early_stopping:bool=True,
                 post_cs:bool=False,
                 cs_param:dict=None,
                 to_undirected_graph:bool=False,
@@ -69,6 +72,7 @@ def experiment(model_init_param:dict,
         TODO：默认值咋整？可以通过配置文件输入一套固定的参数？或者模型本来就内置一套固定的默认参数？
         TODO:让我想想这块怎么写比较靠谱。以及参考一下CogDL的实现
     model_forward_param:model.forward()中额外传入的参数（感觉应该不需要，但是先把位置留出来）
+    implement_early_stopping：是否应用早停机制
     post_cs:要不要在已有的predictor基础上加correct and smooth
         TODO:感觉把它放在这里怪怪的！！！
             但是我一时之间也不知道不放这里还能放哪里！！！
@@ -168,10 +172,10 @@ def experiment(model_init_param:dict,
         loss.backward()
         optimizer.step()
 
-        test_dict=test(model,model_forward_param,y,val_mask)
-        val_acc=test_dict['ACC']
+        val_dict=test(model,model_forward_param,y,val_mask)
+        val_acc=val_dict['ACC']
         val_accs.append(val_acc)
-        val_loss=criterion(test_dict['test_op'][val_mask],y[val_mask])
+        val_loss=criterion(val_dict['test_op'][val_mask],y[val_mask])
         val_losses.append(val_loss.item())
 
         test_dict=test(model,model_forward_param,y,test_mask)
@@ -186,14 +190,25 @@ def experiment(model_init_param:dict,
         if val_loss<=before_lowest_val_loss:
             early_stopping_count=0
             before_lowest_val_loss=val_loss
-            best_model=model.state_dict()
-        else:
+            best_model=deepcopy(model.state_dict())
+            #print('epoch'+str(i))
+            #print('test_acc'+str(test_dict['ACC']))
+            #print(model.training)
+            #for p in model.parameters():
+            #    print(p)
+            #    break
+        elif implement_early_stopping:
             early_stopping_count+=1
             if early_stopping_count>early_stopping:
+                #print('epoch'+str(i))
                 break
     
     model.load_state_dict(best_model)
-    metric_result=test(model,model_forward_param,y,data.test_mask)
+    #print(model.training)
+    #for p in model.parameters():
+    #    print(p)
+    #    break
+    metric_result=test(model,model_forward_param,y,test_mask)
 
     if not post_cs:
         #print('ACC:'+str(round(test_acc['ACC'],3)))
