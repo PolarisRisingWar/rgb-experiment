@@ -221,20 +221,22 @@ def experiment(model_init_param:dict,
         plt.rcParams['axes.unicode_minus'] = False
 
         #TODO:plt.title内容也可以作为入参传入
-        plt.title(dataset_name+'数据集在'+model_name+'模型上的ACC和loss',fontproperties=font)
-
+        plt.title(dataset_name+'数据集在'+model_name+'模型上的loss',fontproperties=font)
         plt.plot(train_losses, label="training loss")
-        plt.plot(train_accs, label="training acc")
         plt.plot(val_losses, label="validating loss")
-        plt.plot(val_accs, label="validating acc")
         plt.plot(test_losses, label="testing loss")
-        plt.plot(test_accs, label="testing acc")
         plt.legend()
-
-        plt.savefig(pics_root+'/'+pics_name)
-
+        plt.savefig(pics_root+'/loss_'+pics_name)
         plt.close()
         #如果不加这句的话，如果print_pics和vis_feat同时置True，可视化特征的图上就会出现这边的图
+
+        plt.title(dataset_name+'数据集在'+model_name+'模型上的ACC',fontproperties=font)
+        plt.plot(train_accs, label="training acc")
+        plt.plot(val_accs, label="validating acc")
+        plt.plot(test_accs, label="testing acc")
+        plt.legend()
+        plt.savefig(pics_root+'/acc_'+pics_name)
+        plt.close()
     
     if print_confusion_matrix:
         #打印测试集上的混淆矩阵
