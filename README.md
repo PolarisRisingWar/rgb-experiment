@@ -14,7 +14,7 @@
 2. 如果您希望在其他地方运行，建议使用`sys.path.extend()`方法将该目录引入，然后您就可以直接使用上一步的示例代码引入`experiment()`函数了。
 3. 可以通过代码直接传入参数（见示例文件run_example1.py），也可以通过配置文件传入参数（见示例文件ini_example.py）
 ## 1.3 增加模型的方式
-1. 模型文件都放在了`.models`文件夹下，可直接将含有以`torch.nn.Module`为基类的模型类文件放在该文件夹中，并在该文件夹下的`__init__.py`中调用模型，然后在`exeriment()`中调用该模型，并在`if model_name==`判断语句中增加对该模型的处理即可。
+1. 模型文件都放在了`.models`文件夹下，可直接将含有以`torch.nn.Module`为基类的模型类文件放在该文件夹中，并在该文件夹下的`__init__.py`中引用模型，然后在`exeriment()`中引用该模型，并在`if model_name==`判断语句中增加对该模型的处理即可。
 2. 您的模型需要返回一个字典，其中键x的value是输出值，键emb的value建议是输出层前一层的节点嵌入值。
 
 # 2. 本项目中各文件的简介
@@ -27,6 +27,7 @@
 7. visualize_feature.py：内含`experiment()`函数中调用的`visualize_feature()`函数，用于绘制节点特征降维到2维平面上的图像。
 8. auto_tune_hp.py：内含可调用的自动调参函数（其实不好用），使用示例见try_auto_tune_hp.py
 9. run_example1.py：一个典型的对initial_params.py中加载的所有数据集在所有模型上运行`experiment()`得到baseline结果的示例代码文件（输出历史见run_example1_output.out）
+10. 最终结果.csv：如题，是各数据集上的baseline accuracy指标结果。OOM就是对应数据集在对应模型上OOM了。（注意，所有数据集都分无向和有向两种情况。对于有向数据集，无向情况就是将其转换为无向图；对于无向数据集，我其实只跑了一次，但为方便比较写到了两边。）
 
 # 3. 其他注意事项
 1. 本项目中matplotlib绘图默认使用本项目下的黑体文件（SimHei.ttf），在代码里写死了。
