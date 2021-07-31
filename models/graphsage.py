@@ -37,7 +37,7 @@ class my_SAGEConv(MessagePassing):
 
     def __init__(self, in_channels,out_channels,add_self_loops:bool = True,**kwargs):
         kwargs.setdefault('aggr', 'mean')
-        super(my_SAGEConv, self).__init__(node_dim=0, **kwargs)
+        super(my_SAGEConv, self).__init__(**kwargs)
 
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -56,5 +56,7 @@ class my_SAGEConv(MessagePassing):
             edge_index, _ = add_self_loops(edge_index, num_nodes=num_nodes)
         
         out = self.propagate(edge_index, x=(x_l, x_r))
+
+        out+=x_l
         
         return out
