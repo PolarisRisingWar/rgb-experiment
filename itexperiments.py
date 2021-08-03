@@ -20,6 +20,8 @@ import matplotlib.pyplot as plt
 
 from copy import deepcopy
 
+import random
+
 def experiment(model_init_param:dict,
                 task:str='node_prediction',
                 dataset_name:str='Github',
@@ -108,6 +110,8 @@ def experiment(model_init_param:dict,
     else:
         #TODO：检查data中是否有mask参数，如果没有的话手动添加
         #TODO: if remake_data_mask=True,直接重置data的mask
+        if remake_data_mask:
+            remake_mask(data,dataset_split_ratio,dataset_split_seed)
         pass
 
     if to_undirected_graph:
@@ -333,3 +337,50 @@ def compare_pred_label(pred,label):
 
     return {'ACC':accuracy,'precision_score':precision_score,
     'recall_score':recall_score,'f1_score':f1_score}
+
+
+
+
+def make_mask(ratio,num_nodes,seed):
+    train_val_test_list=[int(i) for i in ratio.split('-')]
+    random.seed(seed)
+    tvt_sum=sum(train_val_test_list)
+    tvt_ratio_list=[i/tvt_sum for i in train_val_test_list]
+    train_end_index=int(tvt_ratio_list[0]*num_nodes)
+    val_end_index=train_end_index+int(tvt_ratio_list[1]*num_nodes)
+    
+    bs=list(range(num_nodes))
+    random.shuffle(bs)
+    
+    train_mask_index=bs[:train_end_index]
+    val_mask_index=bs[train_end_index:val_end_index]
+    test_mask_index=bs[val_end_index:]
+    
+    train_mask=torch.tensor([False for i in range(num_nodes)])
+    train_mask[train_mask_index]=True
+    val_mask=torch.tensor([False for i in range(num_nodes)])
+    val_mask[val_mask_index]=True
+    test_mask=torch.tensor([False for i in range(num_nodes)])
+    test_mask[test_mask_index]=True
+
+    return (train_mask,val_mask,test_mask)
+
+def check_train_containing(train_mask,y):
+    """（仅用于分类任务）检查train_mask中是否含有y中所有的标签"""
+    for label in y.unique():
+        l=label.item()
+        if l not in y[train_mask]:
+            return False
+    return True
+
+def remake_mask(data,ratio,seed=1234567):
+    """直接覆盖原data的train_mask, val_mask, test_mask三个属性"""
+    while True:
+        (train_mask,val_mask,test_mask)=make_mask(ratio,data.num_nodes,seed)
+        if check_train_containing(train_mask,data.y):
+            data.train_mask=train_mask
+            data.val_mask=val_mask
+            data.test_mask=test_mask
+            break
+        else:
+            seed+=1

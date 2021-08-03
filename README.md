@@ -8,7 +8,7 @@
 1. experiment()函数中数据的默认路径可通过initial_datapath.py中`default_data_path`参数修改（**建议**）。
 2. 类Planetoid格式，可使用zjutoid.py和iozjutoid.py处理：可直接将文件根目录路径传入`experiment()`，要求目录root下raw文件夹下装载数据文件，root名称即为数据集名称，数据文件中间名需要是数据集名称的全小写格式
 3. `torch_geometric.data.Data`格式：可直接将数据传入`experiment()`。
-您需要提前在data中添加`train_mask/val_mask/test_mask`属性（我们后期会增加在函数中添加相应属性的功能，敬请期待）
+您可以提前在data中添加`train_mask/val_mask/test_mask`属性（要求是尺寸为[num_nodes]的布尔tensor），也可以通过设置`remake_data_mask=True`来命令`experiment()`自动配置相应属性。
 ## 1.2 调用函数的方式
 1. 建议直接在本目录下运行代码，引入`experiment()`函数。示例代码：`from itexperiments import experiment`
 2. 如果您希望在其他地方运行，建议使用`sys.path.extend()`方法将该目录引入，然后您就可以直接使用上一步的示例代码引入`experiment()`函数了。
