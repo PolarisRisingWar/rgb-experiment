@@ -3,20 +3,22 @@ import os
 father_dir_path=os.path.dirname(os.path.realpath(__file__))
 
 class InitialParameters:
-    default_data_path=r'zyq_dataset2'
+    default_data_path=r'/data/wanghuijuan/dataset1/zjutoid_ds'
     default_pics_path=father_dir_path+r'/pics'
     simhei_ttf_path=father_dir_path+r'/SimHei.ttf'
     dataset_name_root_map=[{'dataset_name':'Github','dataset_root':default_data_path},
-                            {'dataset_name':'cora','dataset_root':'whj_code1/data'},
+                            {'dataset_name':'cora','dataset_root':default_data_path},
                             {'dataset_name':'Elliptic','dataset_root':default_data_path},
                             {'dataset_name':'Film','dataset_root':default_data_path},
-                            {'dataset_name':'CiteSeer','dataset_root':'whj_code1/data'},
-                            {'dataset_name':'PubMed','dataset_root':'whj_code1/data'},
+                            {'dataset_name':'CiteSeer','dataset_root':default_data_path},
+                            {'dataset_name':'PubMed','dataset_root':default_data_path},
                             {'dataset_name':'Wiki','dataset_root':default_data_path},
                             {'dataset_name':'Clothing','dataset_root':default_data_path},
                             {'dataset_name':'Eletronics','dataset_root':default_data_path},
                             {'dataset_name':'Dblp','dataset_root':default_data_path},
-                            {'dataset_name':'Yelpchi','dataset_root':default_data_path}]
+                            {'dataset_name':'Yelpchi','dataset_root':default_data_path},
+                            {'dataset_name':'Alpha','dataset_root':default_data_path},
+                            {'dataset_name':'Weibo','dataset_root':default_data_path}]
 
     #注意以下两个参数之间是要一一对应的，之所以没合一起主要是因为那样就太长了
     model_names=['MLP','GCN','GraphSAGE','GAT','GGNN','APPNPStack']

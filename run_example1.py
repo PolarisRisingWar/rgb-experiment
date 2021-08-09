@@ -5,7 +5,7 @@ from initial_params import InitialParameters
 
 import random
 
-cuda_index=3
+cuda_index=0
 
 learning_rate=0.01
 epoch=300
@@ -18,10 +18,10 @@ seeds=[random.randint(0,100000000) for i in range(seed_number)]
 #"""
 file_handle=open('whj_code2/integration_experiment/run_example1_output.out',
                 mode='a')  #追加
-file_handle.write('续新数据集，lr0.01+epoch300+10，无向图:\n')
+file_handle.write('新数据集有向图Weibo，lr0.01+epoch300+10，无向图版本:\n')
 #"""
 
-for dn in [6]:  #遍历数据集
+for dn in [12]:  #遍历数据集
     d=InitialParameters.dataset_name_root_map[dn]
     file_handle.write(d['dataset_name'])
     for i in range(6):  #遍历模型
