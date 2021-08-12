@@ -33,6 +33,8 @@ class GraphSAGE(nn.Module):
         
         return {'out':F.log_softmax(x, dim=1),'emb':x}
 
+
+
 class my_SAGEConv(MessagePassing):
 
     def __init__(self, in_channels,out_channels,add_self_loops:bool = True,**kwargs):
@@ -43,8 +45,8 @@ class my_SAGEConv(MessagePassing):
         self.out_channels = out_channels
         self.add_self_loops = add_self_loops
 
-        self.lin_l=nn.Linear(in_channels,out_channels)  #W_l，对中心节点应用
-        self.lin_r=nn.Linear(in_channels,out_channels)  #W_r，对邻居节点应用
+        self.lin_l=nn.Linear(in_channels,out_channels)
+        self.lin_r=nn.Linear(in_channels,out_channels)
     
     def forward(self, x, edge_index):
         x_l = self.lin_l(x)
@@ -55,8 +57,8 @@ class my_SAGEConv(MessagePassing):
             edge_index, _ = remove_self_loops(edge_index)
             edge_index, _ = add_self_loops(edge_index, num_nodes=num_nodes)
         
-        out = self.propagate(edge_index, x=(x_l, x_r))
+        out = self.propagate(edge_index, x=x_l)
 
-        out+=x_l
+        out+=x_r
         
         return out

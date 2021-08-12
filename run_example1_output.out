@@ -140,3 +140,48 @@ Weibo	0.958	0.977	0.977	0.982	0.982	0.977	0.965
 
 新数据集有向图Weibo，lr0.01+epoch300+10，无向图版本:
 Weibo	0.958	0.983	0.981	0.98	0.985	0.981	0.979
+
+运行GraphSAGE2在各数据集上的结果，有向图版本:
+Github	0.855
+cora	0.86
+Elliptic	0.957
+Film	0.308
+CiteSeer	0.728
+PubMed	0.873
+Wiki	0.789
+Clothing	OOM
+Eletronics	0.728
+Dblp	OOM
+Yelpchi	0.858
+Alpha	0.934
+Weibo	0.975
+
+运行GraphSAGE2在各数据集上的结果，有向图转无向版本:
+Github	OOM
+Elliptic	0.963
+Film	0.315
+Wiki	0.787
+Alpha	0.93
+
+又双叒叕改了遍GraphSAGE的代码，看看结果-有向图:
+Github	0.861
+cora	0.867
+Elliptic	0.952
+Film	0.313
+CiteSeer	0.755
+PubMed	0.877
+Wiki	0.827
+Clothing	0.757
+Eletronics	0.73
+Dblp	0.399
+Yelpchi	0.857
+Alpha	0.928
+Weibo	0.974
+
+又双叒叕改了遍GraphSAGE的代码，看看结果-有向图转无向图:
+Github	0.864
+Elliptic	0.96
+Film	0.31
+Wiki	0.807
+Alpha	0.925
+

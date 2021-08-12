@@ -21,13 +21,14 @@ class InitialParameters:
                             {'dataset_name':'Weibo','dataset_root':default_data_path}]
 
     #注意以下两个参数之间是要一一对应的，之所以没合一起主要是因为那样就太长了
-    model_names=['MLP','GCN','GraphSAGE','GAT','GGNN','APPNPStack']
+    model_names=['MLP','GCN','GraphSAGE','GAT','GGNN','APPNPStack','GraphSAGE2']
     default_init_params=[{'num_layers': 3, 'hidden_unit': 64, 'dropout_rate': 0.5},
                         {'num_layers': 2, 'hidden_unit': 64, 'dropout_rate': 0.5},
                         {'num_layers': 2, 'hidden_unit': 64, 'dropout_rate': 0.5},
                         {'num_layers': 2, 'hidden_unit': 8, 'dropout_rate': 0.5, 'heads': 8},
                         {'num_layers': 2, 'hidden_unit': 64, 'dropout_rate': 0.5},
-                        {'hidden_unit': 64, 'dropout_rate': 0.5, 'alpha': 0.1, 'K': 10}]
+                        {'hidden_unit': 64, 'dropout_rate': 0.5, 'alpha': 0.1, 'K': 10},
+                        {'num_layers': 2, 'hidden_unit': 64, 'dropout_rate': 0.5}]
     #APPNP的α和K都是原论文的设置
 
     default_cs_param={'num_correction_layers': 50, 'correction_alpha': 0.8, 'num_smoothing_layers': 50, 'smoothing_alpha': 0.8, 'autoscale': True}

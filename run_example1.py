@@ -18,13 +18,13 @@ seeds=[random.randint(0,100000000) for i in range(seed_number)]
 #"""
 file_handle=open('whj_code2/integration_experiment/run_example1_output.out',
                 mode='a')  #追加
-file_handle.write('新数据集有向图Weibo，lr0.01+epoch300+10，无向图版本:\n')
+file_handle.write('又双叒叕改了遍GraphSAGE的代码，看看结果-有向图转无向图:\n')
 #"""
 
-for dn in [12]:  #遍历数据集
+for dn in [0,2,3,6,11]:  #遍历数据集（13个），其中有向图为[0,2,3,6,11] github, elliptic, film, wiki, alpha
     d=InitialParameters.dataset_name_root_map[dn]
     file_handle.write(d['dataset_name'])
-    for i in range(6):  #遍历模型
+    for i in [2]:  #遍历模型
         #print(d)
         #print(i)
         #上述两个主要可用于监测可能发生的在某一步报bug（比如GPU被挤出去了（help me））
@@ -47,7 +47,7 @@ for dn in [12]:  #遍历数据集
             #pass
     
     #MLP+C&S
-    #"""
+    """
     acc_list=[]
     for seed in seeds:  #遍历seed_number个数据集划分
         acc_dict=experiment(model_init_param={'num_layers':3,'hidden_unit':64,'dropout_rate':0.5},
@@ -59,7 +59,7 @@ for dn in [12]:  #遍历数据集
                             cuda_index=cuda_index,**d)
         acc_list.append(acc_dict['ACC'])
     file_handle.write('\t'+str(round(sum(acc_list)/seed_number,3)))
-    #"""
+    """
 
     file_handle.write('\n')
         
