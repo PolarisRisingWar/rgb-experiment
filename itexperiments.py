@@ -1,4 +1,10 @@
 from matplotlib.font_manager import FontProperties
+
+import numpy as np
+
+import scipy.sparse as sp
+from scipy.sparse import coo_matrix
+
 from zjutoid import zjutoid
 
 from visualize_feature import visualize_feature
@@ -9,6 +15,7 @@ from models import MLP,GCN,GraphSAGE,GAT,GGNN,APPNPStack,GraphSAGE2,PTA
 import torch
 import torch.nn as nn
 from torch.functional import Tensor
+import torch.nn.functional as F
 
 from torch_geometric.nn import CorrectAndSmooth
 from torch_geometric.utils import to_undirected
@@ -23,18 +30,21 @@ from copy import deepcopy
 import random
 
 def experiment(model_init_param:dict,
+                pta_loss_decay:float=0.05,
+                pta_weight_decay:float=0.005,
                 task:str='node_prediction',
                 dataset_name:str='Github',
                 dataset_root:str=InitialParameters.default_data_path,
                 dataset_split_mode:str='ratio',
                 dataset_split_ratio:str='6-2-2',
-                dataset_split_seed:int=10,
+                dataset_split_seed:int=123456789,
                 cuda_index:int=0,
+                use_cpu:bool=False,
                 train_mode:str='fixed_args',
                 criterion:type=nn.NLLLoss,
                 model_name:str='MLP',
                 model_forward_param:dict=None,
-                learning_rate:int=0.1,
+                learning_rate:float=0.1,
                 epoch:int=50,
                 early_stopping:int=10,
                 implement_early_stopping:bool=True,
@@ -50,7 +60,11 @@ def experiment(model_init_param:dict,
                 print_confusion_matrix:bool=False,
                 check_data_valid:bool=False,
                 vis_feat:bool=False,
-                feat_pic_names_prefix:str=None):
+                feat_pic_names_prefix:str=None,
+                row_normalize_features:bool=False,
+                total_seed:int=12345678,
+                ini_seed:int=1234567,
+                need_to_reappear:bool=False):
     """
     入参：
     task: node-prediction / link-prediction / graph-classficiation
@@ -109,49 +123,89 @@ def experiment(model_init_param:dict,
         #TODO:dataset会自动输出一些信息。等后期可以考虑优化这部分输出
     else:
         #TODO：检查data中是否有mask参数，如果没有的话手动添加
-        #TODO: if remake_data_mask=True,直接重置data的mask
-        if remake_data_mask:
+        
+        if remake_data_mask:  #直接重置data的mask
             remake_mask(data,dataset_split_ratio,dataset_split_seed)
-        pass
-
+        
     if to_undirected_graph:
         data.edge_index = to_undirected(data.edge_index,num_nodes=data.num_nodes)
 
     device=torch.device('cuda:'+str(cuda_index) if torch.cuda.is_available() else "cpu")
-    #device='cpu'
-    #TODO:搞个use_cpu类似这样的参数？
+    if use_cpu:
+        device='cpu'
+    
+    if need_to_reappear:
+        random.seed(total_seed)
+        np.random.seed(total_seed)
+        torch.manual_seed(ini_seed)
+        if torch.cuda.is_available(): 
+            torch.cuda.manual_seed(ini_seed)
     
     data=data.to(device)
 
     input_dim=data.num_node_features
     output_dim=data.y.unique().size()[0]
 
+    features=data.x
+    if row_normalize_features:
+        features=coo_matrix(features.cpu())
+        features= normalize_features(features) #会报warning来着，我暂时懒得改了
+        features = torch.FloatTensor(np.array(features.todense()))
+        features=features.to(device)
+
     model_name=model_name.lower()
     if model_name=='mlp':
         model=MLP(input_dim=input_dim,output_dim=output_dim,**model_init_param)
-        model_forward_param={'x':data.x}
+        model_forward_param={'x':features}
     elif model_name=='gcn':
         model=GCN(input_dim=input_dim,output_dim=output_dim,**model_init_param)
-        model_forward_param={'x':data.x,'edge_index':data.edge_index}
+        model_forward_param={'x':features,'edge_index':data.edge_index}
     elif model_name=='graphsage':
         model=GraphSAGE(input_dim=input_dim,output_dim=output_dim,**model_init_param)
-        model_forward_param={'x':data.x,'edge_index':data.edge_index}
+        model_forward_param={'x':features,'edge_index':data.edge_index}
     elif model_name=='graphsage2':
         model=GraphSAGE2(input_dim=input_dim,output_dim=output_dim,**model_init_param)
-        model_forward_param={'x':data.x,'edge_index':data.edge_index}
+        model_forward_param={'x':features,'edge_index':data.edge_index}
     elif model_name=='gat':
         model=GAT(input_dim=input_dim,output_dim=output_dim,**model_init_param)
-        model_forward_param={'x':data.x,'edge_index':data.edge_index}
+        model_forward_param={'x':features,'edge_index':data.edge_index}
     elif model_name=='ggnn':
         model=GGNN(input_dim=input_dim,output_dim=output_dim,**model_init_param)
-        model_forward_param={'x':data.x,'edge_index':data.edge_index}
+        model_forward_param={'x':features,'edge_index':data.edge_index}
     elif model_name=='appnpstack':
         model=APPNPStack(input_dim=input_dim,output_dim=output_dim,**model_init_param)
-        model_forward_param={'x':data.x,'edge_index':data.edge_index}
+        model_forward_param={'x':features,'edge_index':data.edge_index}
+    elif model_name=='pta':
+        edge_index=data.edge_index.cpu()
+
+        node_num=features.size()[0]
+        adj=edge_index2sparse_matrix(edge_index,node_num)
+        adj = adj + sp.eye(adj.shape[0])
+        adj = normalize_adj(adj)
+        adj = sparse_mx_to_torch_sparse_tensor(adj)
+
+        idx_train=data.train_mask.nonzero(as_tuple=True)[0]
+        idx_val=data.val_mask.nonzero(as_tuple=True)[0]
+        idx_test=data.test_mask.nonzero(as_tuple=True)[0]
+
+        labels=data.y
+
+        y_soft_train = label_propagation(adj, labels, idx_train, model_init_param['K'], model_init_param['alpha'])
+        y_soft_val = label_propagation(adj, labels, idx_val, model_init_param['K'], model_init_param['alpha'])
+        y_soft_test = label_propagation(adj, labels, idx_test, model_init_param['K'], model_init_param['alpha'])
+
+        model=PTA(nfeat=input_dim,nclass=output_dim,**model_init_param)
+
+        adj = adj.to(device)
+        y_soft_train = y_soft_train.to(device)
+        y_soft_val = y_soft_val.to(device)
+        y_soft_test = y_soft_test.to(device)
+        labels = labels.to(device)
     
     model.to(device)
-    optimizer=torch.optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer=torch.optim.Adam(model.parameters(),lr=learning_rate)
     #TODO:optimizer也作为可选超参
+
     criterion=criterion()
     y=data.y
     train_mask=data.train_mask
@@ -170,25 +224,47 @@ def experiment(model_init_param:dict,
     for i in range(epoch):
         model.train()
         optimizer.zero_grad()
-        out=model(**model_forward_param)['out']
-        loss=criterion(out[train_mask],y[train_mask])
+        
+        if model_name=='pta':
+            output = model(features)
+            loss = pta_loss_decay * model.loss_function(y_hat = output, y_soft = y_soft_train, epoch = i) + pta_weight_decay * torch.sum(model.Linear1.weight ** 2) / 2
+        else:
+            out=model(**model_forward_param)['out']
+            loss=criterion(out[train_mask],y[train_mask])
+            train_accs.append(compare_pred_label(out[train_mask].max(dim=1)[1],y[train_mask])['ACC'])
 
         train_losses.append(loss.item())
-        train_accs.append(compare_pred_label(out[train_mask].max(dim=1)[1],y[train_mask])['ACC'])
         
         loss.backward()
         optimizer.step()
 
-        val_dict=test(model,model_forward_param,y,val_mask)
-        val_acc=val_dict['ACC']
-        val_accs.append(val_acc)
-        val_loss=criterion(val_dict['test_op'][val_mask],y[val_mask])
-        val_losses.append(val_loss.item())
+        if model_name=='pta':
+            output = model.inference(output, adj)
+            train_accs.append(compare_pred_label(output[idx_train].max(dim=1)[1],y[idx_train])['ACC'])
 
-        test_dict=test(model,model_forward_param,y,test_mask)
-        test_accs.append(test_dict['ACC'])
-        test_loss=criterion(test_dict['test_op'][test_mask],y[test_mask])
-        test_losses.append(test_loss.item())
+            model.eval()
+            output = model(features)
+
+            val_loss = pta_loss_decay * model.loss_function(y_hat = output, y_soft = y_soft_val)
+            val_losses.append(val_loss.item())
+            output = model.inference(output, adj)
+            val_accs.append(compare_pred_label(output[idx_val].max(dim=1)[1],y[idx_val])['ACC'])
+
+            loss_test = pta_loss_decay * model.loss_function(y_hat = output, y_soft = y_soft_test)
+            test_losses.append(loss_test)
+            metric_result=compare_pred_label(output[idx_test].max(dim=1)[1],y[idx_test])
+            test_accs.append(metric_result['ACC'])
+        else:
+            val_dict=test(model,model_forward_param,y,val_mask)
+            val_acc=val_dict['ACC']
+            val_accs.append(val_acc)
+            val_loss=criterion(val_dict['test_op'][val_mask],y[val_mask])
+            val_losses.append(val_loss.item())
+
+            test_dict=test(model,model_forward_param,y,test_mask)
+            test_accs.append(test_dict['ACC'])
+            test_loss=criterion(test_dict['test_op'][test_mask],y[test_mask])
+            test_losses.append(test_loss.item())
 
         #早停
         if i==0:
@@ -198,30 +274,24 @@ def experiment(model_init_param:dict,
             early_stopping_count=0
             before_lowest_val_loss=val_loss
             best_model=deepcopy(model.state_dict())
-            #print('epoch'+str(i))
-            #print('test_acc'+str(test_dict['ACC']))
-            #print(model.training)
-            #for p in model.parameters():
-            #    print(p)
-            #    break
+            if model_name=='pta':
+                best_metric_result=deepcopy(metric_result)
         elif implement_early_stopping:
             early_stopping_count+=1
             if early_stopping_count>early_stopping:
-                #print('epoch'+str(i))
                 break
     
     model.load_state_dict(best_model)
-    #print(model.training)
-    #for p in model.parameters():
-    #    print(p)
-    #    break
-    metric_result=test(model,model_forward_param,y,test_mask)
+
+    if model_name=='pta':
+        metric_result=best_metric_result
+    else:
+        metric_result=test(model,model_forward_param,y,test_mask)
 
     if not post_cs:
-        #print('ACC:'+str(round(test_acc['ACC'],3)))
         pass
     else:
-        #print('原predictor上的ACC：'+str(round(test_acc['ACC'],3)))
+        #TODO:打印原predictor上的输出，与经C&S后的结果作对比
         post=CorrectAndSmooth(**cs_param)
         y_soft=metric_result['test_op'].exp()
         #我写的全是log_softmax，所以要加这句话
@@ -262,6 +332,7 @@ def experiment(model_init_param:dict,
     
     if print_confusion_matrix:
         #打印测试集上的混淆矩阵
+        assert not model_name=='pta'
         p=metric_result['pred']
         l=metric_result['label']
         cm=metrics.confusion_matrix(l.cpu(), p.cpu())
@@ -276,6 +347,7 @@ def experiment(model_init_param:dict,
         print('验证集与测试集上有重复的数据共'+str(sum(data.val_mask & data.test_mask).item())+'个')
     
     if vis_feat:
+        assert not model_name=='pta'
         #有没有传入图片名，如果有的话就用，如果没有的话就自定义
         if not isinstance(feat_pic_names_prefix,str):
             feat_pic_names_prefix=dataset_name+'_dataset_'+model_name+'_model'
@@ -387,3 +459,60 @@ def remake_mask(data,ratio,seed=1234567):
             break
         else:
             seed+=1
+
+
+
+
+
+def edge_index2sparse_matrix(edge_index,node_num):
+    """用于PTA模型中将edge_index转换为scipy的coo_matrix格式"""
+    sizes=(node_num,node_num)
+    v=np.ones(edge_index[0].numel())  #边数
+    return coo_matrix((v, edge_index), shape=sizes)
+
+def normalize_adj(mx):
+    """用于PTA模型，D^{-\frac{1}{2}}AD^{-\frac{1}{2}}"""
+    rowsum = np.array(mx.sum(1))
+    r_inv = np.power(rowsum, -1/2).flatten()
+    r_inv[np.isinf(r_inv)] = 0.
+    r_mat_inv = sp.diags(r_inv)
+    mx = r_mat_inv.dot(mx).dot(r_mat_inv)
+    return mx
+
+def sparse_mx_to_torch_sparse_tensor(sparse_mx):
+    """用于PTA模型
+    Convert a scipy sparse matrix to a torch sparse tensor.
+    顺带一提这个理论上讲是不用这么麻烦的因为我本来就是coo_matrix但是我懒得改了
+    TODO：写得简洁一点，毕竟我的稀疏矩阵本来就是coo_matrix啊"""
+    sparse_mx = sparse_mx.tocoo().astype(np.float32)
+    indices = torch.from_numpy(
+        np.vstack((sparse_mx.row, sparse_mx.col)).astype(np.int64))
+    values = torch.from_numpy(sparse_mx.data)
+    shape = torch.Size(sparse_mx.shape)
+    return torch.sparse.FloatTensor(indices, values, shape)
+
+def label_propagation(adj, labels, idx, K, alpha):
+    """用于PTA模型的标签传播部分"""
+    y0 = torch.zeros(size=(labels.shape[0], labels.max().item() + 1))
+    for i in idx:
+        y0[i][labels[i]] = 1.0
+    
+    y = y0
+    for _ in range(K): 
+        y = torch.matmul(adj, y)
+        for i in idx:
+            y[i] = F.one_hot(torch.tensor(labels[i].cpu().numpy().astype(np.int64)), labels.max().item() + 1)
+        y = (1 - alpha) * y + alpha * y0
+    return y
+
+
+
+def normalize_features(mx): 
+    """D{-1}X
+    Row-normalize sparse matrix"""
+    rowsum = np.array(mx.sum(1))
+    r_inv = np.power(rowsum, -1).flatten()
+    r_inv[np.isinf(r_inv)] = 0.  #总之是会出现这种情况
+    r_mat_inv = sp.diags(r_inv)
+    mx = r_mat_inv.dot(mx)
+    return mx
