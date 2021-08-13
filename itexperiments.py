@@ -47,6 +47,7 @@ def experiment(model_init_param:dict,
                 learning_rate:float=0.1,
                 epoch:int=50,
                 early_stopping:int=10,
+                early_stopping_criterion:str='loss',
                 implement_early_stopping:bool=True,
                 post_cs:bool=False,
                 cs_param:dict=None,
@@ -213,6 +214,8 @@ def experiment(model_init_param:dict,
     test_mask=data.test_mask
     early_stopping_count=0
     before_lowest_val_loss=0
+    before_highest_val_acc=0
+    #TODO:增加用acc+loss来进行早停的功能
     val_accs=[]
     val_losses=[]
     best_model={}
@@ -248,10 +251,11 @@ def experiment(model_init_param:dict,
             val_loss = pta_loss_decay * model.loss_function(y_hat = output, y_soft = y_soft_val)
             val_losses.append(val_loss.item())
             output = model.inference(output, adj)
-            val_accs.append(compare_pred_label(output[idx_val].max(dim=1)[1],y[idx_val])['ACC'])
+            val_acc=compare_pred_label(output[idx_val].max(dim=1)[1],y[idx_val])['ACC']
+            val_accs.append(val_acc)
 
             loss_test = pta_loss_decay * model.loss_function(y_hat = output, y_soft = y_soft_test)
-            test_losses.append(loss_test)
+            test_losses.append(loss_test.item())
             metric_result=compare_pred_label(output[idx_test].max(dim=1)[1],y[idx_test])
             test_accs.append(metric_result['ACC'])
         else:
@@ -269,17 +273,30 @@ def experiment(model_init_param:dict,
         #早停
         if i==0:
             before_lowest_val_loss=val_loss
+            before_highest_val_acc=val_acc
 
-        if val_loss<=before_lowest_val_loss:
-            early_stopping_count=0
-            before_lowest_val_loss=val_loss
-            best_model=deepcopy(model.state_dict())
-            if model_name=='pta':
-                best_metric_result=deepcopy(metric_result)
-        elif implement_early_stopping:
-            early_stopping_count+=1
-            if early_stopping_count>early_stopping:
-                break
+        if early_stopping_criterion=='loss':
+            if val_loss<=before_lowest_val_loss:
+                early_stopping_count=0
+                before_lowest_val_loss=val_loss
+                best_model=deepcopy(model.state_dict())
+                if model_name=='pta':
+                    best_metric_result=deepcopy(metric_result)
+            elif implement_early_stopping:
+                early_stopping_count+=1
+                if early_stopping_count>early_stopping:
+                    break
+        elif early_stopping_criterion=='acc':
+            if val_acc>=before_highest_val_acc:
+                early_stopping_count=0
+                before_highest_val_acc=val_acc
+                best_model=deepcopy(model.state_dict())
+                if model_name=='pta':
+                    best_metric_result=deepcopy(metric_result)
+            elif implement_early_stopping:
+                early_stopping_count+=1
+                if early_stopping_count>early_stopping:
+                    break
     
     model.load_state_dict(best_model)
 
@@ -291,6 +308,7 @@ def experiment(model_init_param:dict,
     if not post_cs:
         pass
     else:
+        assert not model_name=='pta'
         #TODO:打印原predictor上的输出，与经C&S后的结果作对比
         post=CorrectAndSmooth(**cs_param)
         y_soft=metric_result['test_op'].exp()
