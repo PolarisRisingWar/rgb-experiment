@@ -65,7 +65,8 @@ def experiment(model_init_param:dict,
                 row_normalize_features:bool=False,
                 total_seed:int=12345678,
                 ini_seed:int=1234567,
-                need_to_reappear:bool=False):
+                need_to_reappear:bool=False,
+                need_all_metrics:bool=True):
     """
     入参：
     task: node-prediction / link-prediction / graph-classficiation
@@ -104,6 +105,7 @@ def experiment(model_init_param:dict,
     check_data_valid：是否要检验data的mask三种数据集的数量，以及各自之间没有交集的情况
     vis_feat：是否要将节点特征可视化（可视化节点初始特征，和经卷积后的节点嵌入）
         feat_pic_names_prefix节点特征可视化输出图的名称（前缀，后面加123等）
+    need_all_metrics: 如果置False，则只计算ACC的值，其他指标都置0
 
     返回值：
     {'ACC':accuracy,'precision_score':precision_score,'recall_score':recall_score,
@@ -115,6 +117,8 @@ def experiment(model_init_param:dict,
     TODO:提高容错
     TODO:继续解耦
     TODO：交叉多种数据集划分方式以提升结果鲁棒性，这个过程我现在还是放外面的，得想想要不要放里面
+    TODO:我想了一下，感觉像device和need_all_metrics这种参数比较适合作为全局变量
+    下次想个办法搞个class，就能用self的属性了
     
     """
     if not specify_data:
@@ -123,7 +127,8 @@ def experiment(model_init_param:dict,
         data=dataset.data
         #TODO:dataset会自动输出一些信息。等后期可以考虑优化这部分输出
     else:
-        #TODO：检查data中是否有mask参数，如果没有的话手动添加
+        #TODO：检查data中的mask参数，如果没有的话手动添加；如果形制不符（是类似PTA idx那种格式
+        #需要修改格式）；如果是其他什么奇奇怪怪的格式直接重置mask
         
         if remake_data_mask:  #直接重置data的mask
             remake_mask(data,dataset_split_ratio,dataset_split_seed)
@@ -141,18 +146,18 @@ def experiment(model_init_param:dict,
         torch.manual_seed(ini_seed)
         if torch.cuda.is_available(): 
             torch.cuda.manual_seed(ini_seed)
-    
-    data=data.to(device)
 
     input_dim=data.num_node_features
     output_dim=data.y.unique().size()[0]
 
     features=data.x
     if row_normalize_features:
-        features=coo_matrix(features.cpu())
+        features=coo_matrix(features)
         features= normalize_features(features) #会报warning来着，我暂时懒得改了
         features = torch.FloatTensor(np.array(features.todense()))
-        features=features.to(device)
+    features=features.to(device)
+
+    data=data.to(device)
 
     model_name=model_name.lower()
     if model_name=='mlp':
@@ -179,11 +184,12 @@ def experiment(model_init_param:dict,
     elif model_name=='pta':
         edge_index=data.edge_index.cpu()
 
-        node_num=features.size()[0]
-        adj=edge_index2sparse_matrix(edge_index,node_num)
+        adj=edge_index2sparse_matrix(edge_index,data.num_nodes)
         adj = adj + sp.eye(adj.shape[0])
         adj = normalize_adj(adj)
         adj = sparse_mx_to_torch_sparse_tensor(adj)
+
+        adj=adj.to(device)
 
         idx_train=data.train_mask.nonzero(as_tuple=True)[0]
         idx_val=data.val_mask.nonzero(as_tuple=True)[0]
@@ -191,17 +197,13 @@ def experiment(model_init_param:dict,
 
         labels=data.y
 
-        y_soft_train = label_propagation(adj, labels, idx_train, model_init_param['K'], model_init_param['alpha'])
-        y_soft_val = label_propagation(adj, labels, idx_val, model_init_param['K'], model_init_param['alpha'])
-        y_soft_test = label_propagation(adj, labels, idx_test, model_init_param['K'], model_init_param['alpha'])
+        y_soft_train = label_propagation(adj, labels, idx_train, model_init_param['K'], model_init_param['alpha'],device)
+        y_soft_val = label_propagation(adj, labels, idx_val, model_init_param['K'], model_init_param['alpha'],device)
+        y_soft_test = label_propagation(adj, labels, idx_test, model_init_param['K'], model_init_param['alpha'],device)
 
         model=PTA(nfeat=input_dim,nclass=output_dim,**model_init_param)
 
-        adj = adj.to(device)
-        y_soft_train = y_soft_train.to(device)
-        y_soft_val = y_soft_val.to(device)
-        y_soft_test = y_soft_test.to(device)
-        labels = labels.to(device)
+        
     
     model.to(device)
     optimizer=torch.optim.Adam(model.parameters(),lr=learning_rate)
@@ -234,7 +236,7 @@ def experiment(model_init_param:dict,
         else:
             out=model(**model_forward_param)['out']
             loss=criterion(out[train_mask],y[train_mask])
-            train_accs.append(compare_pred_label(out[train_mask].max(dim=1)[1],y[train_mask])['ACC'])
+            train_accs.append(compare_pred_label(out[train_mask].max(dim=1)[1],y[train_mask],need_all_metrics)['ACC'])
 
         train_losses.append(loss.item())
         
@@ -243,7 +245,7 @@ def experiment(model_init_param:dict,
 
         if model_name=='pta':
             output = model.inference(output, adj)
-            train_accs.append(compare_pred_label(output[idx_train].max(dim=1)[1],y[idx_train])['ACC'])
+            train_accs.append(compare_pred_label(output[idx_train].max(dim=1)[1],y[idx_train],need_all_metrics)['ACC'])
 
             model.eval()
             output = model(features)
@@ -251,21 +253,21 @@ def experiment(model_init_param:dict,
             val_loss = pta_loss_decay * model.loss_function(y_hat = output, y_soft = y_soft_val)
             val_losses.append(val_loss.item())
             output = model.inference(output, adj)
-            val_acc=compare_pred_label(output[idx_val].max(dim=1)[1],y[idx_val])['ACC']
+            val_acc=compare_pred_label(output[idx_val].max(dim=1)[1],y[idx_val],need_all_metrics)['ACC']
             val_accs.append(val_acc)
 
             loss_test = pta_loss_decay * model.loss_function(y_hat = output, y_soft = y_soft_test)
             test_losses.append(loss_test.item())
-            metric_result=compare_pred_label(output[idx_test].max(dim=1)[1],y[idx_test])
+            metric_result=compare_pred_label(output[idx_test].max(dim=1)[1],y[idx_test],need_all_metrics)
             test_accs.append(metric_result['ACC'])
         else:
-            val_dict=test(model,model_forward_param,y,val_mask)
+            val_dict=test(model,model_forward_param,y,val_mask,need_all_metrics)
             val_acc=val_dict['ACC']
             val_accs.append(val_acc)
             val_loss=criterion(val_dict['test_op'][val_mask],y[val_mask])
             val_losses.append(val_loss.item())
 
-            test_dict=test(model,model_forward_param,y,test_mask)
+            test_dict=test(model,model_forward_param,y,test_mask,need_all_metrics)
             test_accs.append(test_dict['ACC'])
             test_loss=criterion(test_dict['test_op'][test_mask],y[test_mask])
             test_losses.append(test_loss.item())
@@ -303,7 +305,7 @@ def experiment(model_init_param:dict,
     if model_name=='pta':
         metric_result=best_metric_result
     else:
-        metric_result=test(model,model_forward_param,y,test_mask)
+        metric_result=test(model,model_forward_param,y,test_mask,need_all_metrics)
 
     if not post_cs:
         pass
@@ -385,7 +387,7 @@ def experiment(model_init_param:dict,
 
 
 
-def test(model,x,y,mask):
+def test(model,x,y,mask,need_all_metrics):
     """
     model
     x（所有需要传入model.forward函数中的参数，字典形式）
@@ -402,7 +404,7 @@ def test(model,x,y,mask):
     pred=pred[mask]
     label=label[mask]
     
-    metric_result=compare_pred_label(pred,label)
+    metric_result=compare_pred_label(pred,label,need_all_metrics)
 
     return {'ACC':metric_result['ACC'],'test_op':out,
     'precision_score':metric_result['precision_score'],
@@ -411,22 +413,27 @@ def test(model,x,y,mask):
 
 
 
-def compare_pred_label(pred,label):
+def compare_pred_label(pred,label,need_all_metrics):
     #accuracy
     total = pred.size()[0]
     #print(pred.size())
     correct = pred.eq(label).sum().item()
     accuracy=correct/total
 
-    #判断pred和label是否是tensor，如果是的话需要挪到CPU上
-    if isinstance(pred,Tensor):
-        p=pred.cpu()
-    if isinstance(label,Tensor):
-        l=label.cpu()
-    
-    precision_score=metrics.precision_score(l, p, average='macro',zero_division=0)
-    recall_score=metrics.recall_score(l, p, average='macro',zero_division=0)
-    f1_score=metrics.f1_score(l, p, average='macro',zero_division=0)
+    if need_all_metrics:
+        #判断pred和label是否是tensor，如果是的话需要挪到CPU上
+        if isinstance(pred,Tensor):
+            p=pred.cpu()
+        if isinstance(label,Tensor):
+            l=label.cpu()
+        
+        precision_score=metrics.precision_score(l, p, average='macro',zero_division=0)
+        recall_score=metrics.recall_score(l, p, average='macro',zero_division=0)
+        f1_score=metrics.f1_score(l, p, average='macro',zero_division=0)
+    else:
+        precision_score=0
+        recall_score=0
+        f1_score=0
 
     return {'ACC':accuracy,'precision_score':precision_score,
     'recall_score':recall_score,'f1_score':f1_score}
@@ -509,17 +516,18 @@ def sparse_mx_to_torch_sparse_tensor(sparse_mx):
     shape = torch.Size(sparse_mx.shape)
     return torch.sparse.FloatTensor(indices, values, shape)
 
-def label_propagation(adj, labels, idx, K, alpha):
+def label_propagation(adj, labels, idx, K, alpha,device):
     """用于PTA模型的标签传播部分"""
-    y0 = torch.zeros(size=(labels.shape[0], labels.max().item() + 1))
+    y0 = torch.zeros(size=(labels.shape[0], labels.max().item() + 1)).to(device)
     for i in idx:
         y0[i][labels[i]] = 1.0
     
     y = y0
+    onehotlabel=F.one_hot(labels)
     for _ in range(K): 
-        y = torch.matmul(adj, y)
+        y = torch.matmul(adj, y)  #应该是因为这一步，所以y不会再转回来影响y0了
         for i in idx:
-            y[i] = F.one_hot(torch.tensor(labels[i].cpu().numpy().astype(np.int64)), labels.max().item() + 1)
+            y[i] = onehotlabel[i]
         y = (1 - alpha) * y + alpha * y0
     return y
 
