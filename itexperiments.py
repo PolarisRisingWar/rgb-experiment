@@ -326,7 +326,7 @@ def experiment(model_init_param:dict,
         pred = y_soft[test_mask]
         label = y[test_mask]
 
-        metric_result=compare_pred_label(pred,label)
+        metric_result=compare_pred_label(pred,label,need_all_metrics)
     
     if print_pics:
         font = FontProperties(fname=InitialParameters.simhei_ttf_path)
