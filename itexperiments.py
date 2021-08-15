@@ -47,7 +47,7 @@ def experiment(model_init_param:dict,
                 learning_rate:float=0.1,
                 epoch:int=50,
                 early_stopping:int=10,
-                early_stopping_criterion:str='loss',
+                early_stopping_criterion:str='acc',
                 implement_early_stopping:bool=True,
                 post_cs:bool=False,
                 cs_param:dict=None,
@@ -106,6 +106,7 @@ def experiment(model_init_param:dict,
     vis_feat：是否要将节点特征可视化（可视化节点初始特征，和经卷积后的节点嵌入）
         feat_pic_names_prefix节点特征可视化输出图的名称（前缀，后面加123等）
     need_all_metrics: 如果置False，则只计算ACC的值，其他指标都置0
+    early_stopping_criterion: acc / loss
 
     返回值：
     {'ACC':accuracy,'precision_score':precision_score,'recall_score':recall_score,
