@@ -62,7 +62,7 @@ def experiment(model_init_param:dict,
                 check_data_valid:bool=False,
                 vis_feat:bool=False,
                 feat_pic_names_prefix:str=None,
-                row_normalize_features:bool=False,
+                normalize_feature:str=None,
                 total_seed:int=12345678,
                 ini_seed:int=1234567,
                 need_to_reappear:bool=False,
@@ -107,6 +107,7 @@ def experiment(model_init_param:dict,
         feat_pic_names_prefix节点特征可视化输出图的名称（前缀，后面加123等）
     need_all_metrics: 如果置False，则只计算ACC的值，其他指标都置0
     early_stopping_criterion: acc / loss
+    normalize_feature: None 'row' 'col' 'all'
 
     返回值：
     {'ACC':accuracy,'precision_score':precision_score,'recall_score':recall_score,
@@ -151,14 +152,15 @@ def experiment(model_init_param:dict,
     input_dim=data.num_node_features
     output_dim=data.y.unique().size()[0]
 
-    features=data.x
-    if row_normalize_features:
-        features=coo_matrix(features)
-        features= normalize_features(features) #会报warning来着，我暂时懒得改了
-        features = torch.FloatTensor(np.array(features.todense()))
-    features=features.to(device)
-
     data=data.to(device)
+    features=data.x
+    #这部分代码参考了：https://pytorch-geometric.readthedocs.io/en/latest/_modules/torch_geometric/transforms/normalize_features.html
+    if normalize_feature=='row':
+        features=features/features.sum(1, keepdim=True).clamp(min=1)
+    elif normalize_feature=='col':
+        features=features/features.sum(0, keepdim=True).clamp(min=1)
+    elif normalize_feature=='all':
+        features=features/features.sum().clamp(min=1)
 
     model_name=model_name.lower()
     if model_name=='mlp':
@@ -354,6 +356,7 @@ def experiment(model_init_param:dict,
     if print_confusion_matrix:
         #打印测试集上的混淆矩阵
         assert not model_name=='pta'
+        #TODO:新增对PTA模型的支持
         p=metric_result['pred']
         l=metric_result['label']
         cm=metrics.confusion_matrix(l.cpu(), p.cpu())
@@ -369,6 +372,7 @@ def experiment(model_init_param:dict,
     
     if vis_feat:
         assert not model_name=='pta'
+        #TODO：新增对PTA模型的支持
         #有没有传入图片名，如果有的话就用，如果没有的话就自定义
         if not isinstance(feat_pic_names_prefix,str):
             feat_pic_names_prefix=dataset_name+'_dataset_'+model_name+'_model'
@@ -531,15 +535,3 @@ def label_propagation(adj, labels, idx, K, alpha,device):
             y[i] = onehotlabel[i]
         y = (1 - alpha) * y + alpha * y0
     return y
-
-
-
-def normalize_features(mx): 
-    """D{-1}X
-    Row-normalize sparse matrix"""
-    rowsum = np.array(mx.sum(1))
-    r_inv = np.power(rowsum, -1).flatten()
-    r_inv[np.isinf(r_inv)] = 0.  #总之是会出现这种情况
-    r_mat_inv = sp.diags(r_inv)
-    mx = r_mat_inv.dot(mx)
-    return mx

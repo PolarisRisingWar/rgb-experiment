@@ -45,7 +45,7 @@ for dn in [0,2,3,6,11]:  #遍历数据集（13个），其中有向图为[0,2,3,
                                     vis_feat=False,feat_pic_names_prefix='di_'+d['dataset_name']+InitialParameters.model_names[i],
                                     early_stopping_criterion='acc',
                                     need_all_metrics=False,
-                                    row_normalize_features=True,
+                                    normalize_feature=None,
                                     cuda_index=cuda_index,**d)
                 acc_list.append(acc_dict['ACC'])
             file_handle.write('\t'+str(round(sum(acc_list)/seed_number,3)))
@@ -65,7 +65,7 @@ for dn in [0,2,3,6,11]:  #遍历数据集（13个），其中有向图为[0,2,3,
                             post_cs=True,cs_param=InitialParameters.default_cs_param,
                             early_stopping_criterion='acc',
                             need_all_metrics=False,
-                            row_normalize_features=True,
+                            normalize_feature=None,
                             cuda_index=cuda_index,**d)
         acc_list.append(acc_dict['ACC'])
     file_handle.write('\t'+str(round(sum(acc_list)/seed_number,3)))
