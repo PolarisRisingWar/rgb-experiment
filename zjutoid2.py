@@ -171,7 +171,7 @@ class zjutoid2():
             new_graph_num_node=len(nodes_set)
         elif isinstance(nodes_set,Tensor) and nodes_set.dtype==torch.bool:  #mask
             new_graph_num_node=sum(nodes_set).item()
-            
+
         node_sampled_mask = torch.zeros(self.num_nodes, dtype=torch.bool)
         node_sampled_mask[nodes_set] = 1            
         mask = node_sampled_mask[original_edge_index[0]] & node_sampled_mask[original_edge_index[1]]
@@ -188,10 +188,10 @@ class zjutoid2():
 
 
 #测试部分
-#"""
+"""
 z=zjutoid2('bgp','/data/wanghuijuan/dataset1/zjutoid2_ds',specify_non_label_mask=True,
         apply_sample=False,remove_non_label_node=True)
 print(z.data.is_directed())
 print(z.data)
 #print(z.data.edge_index.max())
-#"""
+"""

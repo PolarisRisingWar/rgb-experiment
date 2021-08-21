@@ -29,6 +29,12 @@ from copy import copy, deepcopy
 
 import random
 
+class TransferMessage():
+    def __init__(self) -> None:
+        self.f1_average='macro'
+
+tm=TransferMessage()
+
 def experiment(model_init_param:dict,
                 pta_loss_decay:float=0.05,
                 pta_weight_decay:float=0.005,
@@ -66,7 +72,8 @@ def experiment(model_init_param:dict,
                 total_seed:int=12345678,
                 ini_seed:int=1234567,
                 need_to_reappear:bool=False,
-                need_all_metrics:bool=True):
+                need_all_metrics:bool=True,
+                f1_average:str='macro'):
     """
     入参：
     task: node-prediction / link-prediction / graph-classficiation
@@ -123,6 +130,9 @@ def experiment(model_init_param:dict,
     下次想个办法搞个class，就能用self的属性了
     
     """
+    #print(tm.f1_average)
+    tm.f1_average=f1_average
+
     if not specify_data:
         dataset=zjutoid(root=dataset_root,name=dataset_name,
                 split=dataset_split_mode,ratio=dataset_split_ratio,seed=dataset_split_seed)
@@ -436,7 +446,8 @@ def compare_pred_label(pred,label,need_all_metrics):
         
         precision_score=metrics.precision_score(l, p, average='macro',zero_division=0)
         recall_score=metrics.recall_score(l, p, average='macro',zero_division=0)
-        f1_score=metrics.f1_score(l, p, average='macro',zero_division=0)
+        #print(tm.f1_average)
+        f1_score=metrics.f1_score(l, p, average=tm.f1_average,zero_division=0)
     else:
         precision_score=0
         recall_score=0
