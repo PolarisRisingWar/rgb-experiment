@@ -25,7 +25,7 @@ from sklearn import metrics
 
 import matplotlib.pyplot as plt
 
-from copy import deepcopy
+from copy import copy, deepcopy
 
 import random
 
@@ -133,6 +133,7 @@ def experiment(model_init_param:dict,
         #需要修改格式）；如果是其他什么奇奇怪怪的格式直接重置mask
         
         if remake_data_mask:  #直接重置data的mask
+            #TODO：把remake_mask函数同步成zjutoid2里的格式
             remake_mask(data,dataset_split_ratio,dataset_split_seed)
         
     if to_undirected_graph:
@@ -150,7 +151,8 @@ def experiment(model_init_param:dict,
             torch.cuda.manual_seed(ini_seed)
 
     input_dim=data.num_node_features
-    output_dim=data.y.unique().size()[0]
+    output_dim=data.y.max().item()+1  #不用之前的unique().size()[0]是考虑到我用-1指无标签了
+    #print(output_dim)
 
     data=data.to(device)
     features=data.x
@@ -528,7 +530,14 @@ def label_propagation(adj, labels, idx, K, alpha,device):
         y0[i][labels[i]] = 1.0
     
     y = y0
-    onehotlabel=F.one_hot(labels)
+    
+    #对负数标签（即无标签的数据），随便给个标签应付一下，反正不在mask里，没它们的事
+    y_nonlabel_mask=labels<0
+    label_copy=copy(labels)
+    label_copy[y_nonlabel_mask]=0
+
+    onehotlabel=F.one_hot(label_copy)
+
     for _ in range(K): 
         y = torch.matmul(adj, y)  #应该是因为这一步，所以y不会再转回来影响y0了
         for i in idx:
