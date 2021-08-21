@@ -13,9 +13,10 @@ import random
 
 #函数部分
 class zjutoid2():
-    def __init__(self,dataset_name:str,dataset_root:str,split_method:str='ratio',
-            split_seed=1234567,
-            split_ratio:str='6-2-2',split_train_num_in_each_class:int=20,
+    def __init__(self,dataset_name:str,dataset_root:str,
+            split_method:str='ratio',split_seed=1234567,
+            split_ratio:str='6-2-2',num_train_per_class:int=20,num_val:int=500,
+            num_test:int=1000,
             apply_sample:bool=False,sample_seed=1234567,
             sample_method:str='random',sample_criterion='node',sample_count_method='ratio',
             sample_num=1000,sample_ratio=0.8,
@@ -28,23 +29,40 @@ class zjutoid2():
         TODO：如果没有，就自己创造文件夹，并使用download()函数下载数据
         split_method为'ratio'时，按照split_ratio的比例划分数据集
         TODO：split_method为'default'时，返回内置的数据集mask（但是要抽样啊啥的之后又咋整？）
-        TODO：split_method为'
+        TODO：split_method为'random'时，参考Planetoid类的数据集划分方式
+            使用入参num_train_per_class num_val num_test进行划分（如果超过了节点数需要判断）
+        apply_sample：是否应用图采样技术
+        sample_method为'random'时
+            如果sample_criterion为'node'，随机抽样节点，返回node-induced subgraph
+            TODO:找点更好的node-induced subgraph方法吧，遍历总觉得不太对劲
+            TODO：如果sample_criterion为'edge'，随机抽样边，返回edge-induced subgraph
+            sample_count_method='ratio' (sample_ratio) / TODO: 'num' (sample_num)（判断数量）
+        TODO:sample_method为'SRW'时，应用simple random walk采样
+            随机抽取一个起始节点模拟random walk（长度为sample_rw_length）
+            返回节点序列的node-induced subgraph
+        TODO: remove_non_label_node：移除无标签节点
+        specuft_non_label_mask：在数据中设置non_label_mask（无标签节点为True）
 
-        返回值：PyG的Data格式图数据
-        属性：x, y, edge_index, train_mask, val_mask, test_mask
+
+        self.data：PyG的Data格式图数据
+        属性：x, y, edge_index, train_mask, val_mask, test_mask, non_label_mask (optional)
         """
         x=torch.load(dataset_root+'/'+dataset_name+'/x.pt')
         y=torch.load(dataset_root+'/'+dataset_name+'/y.pt')
         y=y.long()
         edge_index=torch.load(dataset_root+'/'+dataset_name+'/edge_index.pt')
         edge_index=edge_index.long()
+
+        self.num_nodes=x.size()[0]
+        self.split_seed=split_seed
         
+        #图采样
         if apply_sample:
             random.seed(sample_seed)
             if sample_method=='random':
                 if sample_criterion=='node':
                     if sample_count_method=='ratio':
-                        before_sample_num_nodes=x.size()[0]
+                        before_sample_num_nodes=self.num_nodes
                         after_sample_num_nodes=int(before_sample_num_nodes*sample_ratio)
                         sample_nodes=random.sample(list(range(before_sample_num_nodes)),after_sample_num_nodes)
                         x=x[sample_nodes]
@@ -67,18 +85,22 @@ class zjutoid2():
 
                         edge_index=new_eit.T
 
+                        self.num_nodes=after_sample_num_nodes
+
         data=Data(x=x,y=y,edge_index=edge_index)
 
-        #配置mask
+        #配置non_label_mask
         self.non_label_mask=y==-1
         if specify_non_label_mask:
             data.non_label_mask=self.non_label_mask
 
         #配置train_val_test mask：注意没有标签的节点不参与配置
         if split_method=='ratio':
-            self.remake_mask(data,split_ratio,split_seed)
+            self.remake_mask(data,split_ratio)
         
         self.data=data
+
+
 
     def create_dir(self):
         pass
@@ -88,17 +110,17 @@ class zjutoid2():
 
 
 
-    def make_mask(self,ratio,num_nodes,seed):
+    def make_mask(self,ratio):
         have_label_mask=~self.non_label_mask
         
-        bs=torch.tensor(list(range(num_nodes)),dtype=int)
+        bs=torch.tensor(list(range(self.num_nodes)),dtype=int)
         bs_label=bs[have_label_mask]
         num_have_label=len(bs_label)
         bs_label_index=list(range(num_have_label))
         random.shuffle(bs_label_index)
 
         train_val_test_list=[int(i) for i in ratio.split('-')]
-        random.seed(seed)
+        random.seed(self.split_seed)
         tvt_sum=sum(train_val_test_list)
         tvt_ratio_list=[i/tvt_sum for i in train_val_test_list]
         train_end_index=int(tvt_ratio_list[0]*num_have_label)
@@ -108,11 +130,11 @@ class zjutoid2():
         val_mask_index=bs_label_index[train_end_index:val_end_index]
         test_mask_index=bs_label_index[val_end_index:]
         
-        train_mask=torch.tensor([False for i in range(num_nodes)])
+        train_mask=torch.tensor([False for i in range(self.num_nodes)])
         train_mask[bs_label[train_mask_index]]=True
-        val_mask=torch.tensor([False for i in range(num_nodes)])
+        val_mask=torch.tensor([False for i in range(self.num_nodes)])
         val_mask[bs_label[val_mask_index]]=True
-        test_mask=torch.tensor([False for i in range(num_nodes)])
+        test_mask=torch.tensor([False for i in range(self.num_nodes)])
         test_mask[bs_label[test_mask_index]]=True
 
         return (train_mask,val_mask,test_mask)
@@ -127,22 +149,24 @@ class zjutoid2():
                 return False
         return True
 
-    def remake_mask(self,data,ratio,seed=1234567):
+    def remake_mask(self,data,ratio):
         """直接覆盖原data的train_mask, val_mask, test_mask三个属性"""
         while True:
-            (train_mask,val_mask,test_mask)=self.make_mask(ratio,data.num_nodes,seed)
+            (train_mask,val_mask,test_mask)=self.make_mask(ratio)
             if self.check_train_containing(train_mask,data.y):
                 data.train_mask=train_mask
                 data.val_mask=val_mask
                 data.test_mask=test_mask
                 break
             else:
-                seed+=1
+                self.split_seed+=1
+
 
 
 #测试部分
-"""
+#"""
 z=zjutoid2('bgp','/data/wanghuijuan/dataset1/zjutoid2_ds',specify_non_label_mask=True,
         apply_sample=False)
 print(z.data.is_directed())
-"""
+print(z.data)
+#"""
