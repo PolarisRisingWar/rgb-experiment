@@ -6,6 +6,7 @@
 import datetime
 
 import torch
+from torch.functional import Tensor
 
 from torch_geometric.data import Data
 
@@ -37,10 +38,11 @@ class zjutoid2():
             TODO:找点更好的node-induced subgraph方法吧，遍历总觉得不太对劲
             TODO：如果sample_criterion为'edge'，随机抽样边，返回edge-induced subgraph
             sample_count_method='ratio' (sample_ratio) / TODO: 'num' (sample_num)（判断数量）
+            （注意这里的ratio，如果要移除无标签节点，是移除之后的ratio）
         TODO:sample_method为'SRW'时，应用simple random walk采样
             随机抽取一个起始节点模拟random walk（长度为sample_rw_length）
             返回节点序列的node-induced subgraph
-        TODO: remove_non_label_node：移除无标签节点
+        remove_non_label_node：如果置True则移除无标签节点，即返回有标签节点及其node-induced subgrah
         specuft_non_label_mask：在数据中设置non_label_mask（无标签节点为True）
 
 
@@ -55,6 +57,13 @@ class zjutoid2():
 
         self.num_nodes=x.size()[0]
         self.split_seed=split_seed
+
+        if remove_non_label_node:
+            have_label_mask=y!=-1
+            x=x[have_label_mask]
+            y=y[have_label_mask]
+            edge_index=self.node_induced_subgraph(have_label_mask,edge_index)
+            self.num_nodes=x.size()[0]
         
         #图采样
         if apply_sample:
@@ -67,30 +76,17 @@ class zjutoid2():
                         sample_nodes=random.sample(list(range(before_sample_num_nodes)),after_sample_num_nodes)
                         x=x[sample_nodes]
                         y=y[sample_nodes]
-                        before_sample_num_edges=edge_index.size()[1]
-                        eit=edge_index.T
-
-                        #starttime = datetime.datetime.now()
-                        #print(starttime)
-                        
-                        node_sampled_mask=torch.tensor([False for _ in range(before_sample_num_nodes)])
-                        node_sampled_mask[sample_nodes]=True
-                        new_edge_index_mask=torch.tensor([True if (node_sampled_mask[eit[i][0]] and node_sampled_mask[eit[i][1]]) else False for i in range(before_sample_num_edges)])
-                        
-                        #endtime = datetime.datetime.now()
-                        #print(endtime)
-                        #print((endtime - starttime).seconds)
-                        
-                        new_eit=eit[new_edge_index_mask]
-
-                        edge_index=new_eit.T
+                        edge_index=self.node_induced_subgraph(sample_nodes,edge_index)
 
                         self.num_nodes=after_sample_num_nodes
+        
+        
 
         data=Data(x=x,y=y,edge_index=edge_index)
 
         #配置non_label_mask
         self.non_label_mask=y==-1
+        #print(self.non_label_mask.sum())
         if specify_non_label_mask:
             data.non_label_mask=self.non_label_mask
 
@@ -130,11 +126,11 @@ class zjutoid2():
         val_mask_index=bs_label_index[train_end_index:val_end_index]
         test_mask_index=bs_label_index[val_end_index:]
         
-        train_mask=torch.tensor([False for i in range(self.num_nodes)])
+        train_mask=torch.zeros(self.num_nodes,dtype=torch.bool)
         train_mask[bs_label[train_mask_index]]=True
-        val_mask=torch.tensor([False for i in range(self.num_nodes)])
+        val_mask=torch.zeros(self.num_nodes,dtype=torch.bool)
         val_mask[bs_label[val_mask_index]]=True
-        test_mask=torch.tensor([False for i in range(self.num_nodes)])
+        test_mask=torch.zeros(self.num_nodes,dtype=torch.bool)
         test_mask[bs_label[test_mask_index]]=True
 
         return (train_mask,val_mask,test_mask)
@@ -160,13 +156,42 @@ class zjutoid2():
                 break
             else:
                 self.split_seed+=1
+    
+
+
+
+    def node_induced_subgraph(self,nodes_set,original_edge_index,reorder_nodes=True):
+        #参考https://pytorch-geometric.readthedocs.io/en/latest/_modules/torch_geometric/utils/subgraph.html#subgraph
+        """
+        入参：node_set是节点索引的list或mask，original_edge_index是原图的edge_index
+            reorder_nodes：是否要对子图的节点重新从0开始索引。默认置True
+        返回值：node-induced subgraph的edge_index
+        """
+        if isinstance(nodes_set,list):  #list
+            new_graph_num_node=len(nodes_set)
+        elif isinstance(nodes_set,Tensor) and nodes_set.dtype==torch.bool:  #mask
+            new_graph_num_node=sum(nodes_set).item()
+            
+        node_sampled_mask = torch.zeros(self.num_nodes, dtype=torch.bool)
+        node_sampled_mask[nodes_set] = 1            
+        mask = node_sampled_mask[original_edge_index[0]] & node_sampled_mask[original_edge_index[1]]
+        #整数列表索引这部分知识点我确实运用不娴熟
+        edge_index = original_edge_index[:, mask]
+        if reorder_nodes:
+            n_idx = torch.zeros(self.num_nodes, dtype=torch.long)
+            n_idx[nodes_set] = torch.arange(new_graph_num_node)
+            edge_index = n_idx[edge_index]
+        return edge_index
+
+
 
 
 
 #测试部分
 #"""
 z=zjutoid2('bgp','/data/wanghuijuan/dataset1/zjutoid2_ds',specify_non_label_mask=True,
-        apply_sample=False)
+        apply_sample=False,remove_non_label_node=True)
 print(z.data.is_directed())
 print(z.data)
+#print(z.data.edge_index.max())
 #"""
