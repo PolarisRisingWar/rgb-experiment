@@ -69,6 +69,7 @@ def experiment(model_init_param:dict,
                 vis_feat:bool=False,
                 feat_pic_names_prefix:str=None,
                 normalize_feature:str=None,
+                normalize_feature_method:str=None,
                 total_seed:int=12345678,
                 ini_seed:int=1234567,
                 need_to_reappear:bool=False,
@@ -115,6 +116,7 @@ def experiment(model_init_param:dict,
     need_all_metrics: 如果置False，则只计算ACC的值，其他指标都置0
     early_stopping_criterion: acc / loss
     normalize_feature: None 'row' 'col' 'all'
+    normalize_feature_method: None 'MinMaxScalar' 'StandardScalar'
 
     返回值：
     {'ACC':accuracy,'precision_score':precision_score,'recall_score':recall_score,
@@ -165,14 +167,47 @@ def experiment(model_init_param:dict,
     #print(output_dim)
 
     data=data.to(device)
+
+    #特征归一化部分
     features=data.x
-    #这部分代码参考了：https://pytorch-geometric.readthedocs.io/en/latest/_modules/torch_geometric/transforms/normalize_features.html
-    if normalize_feature=='row':
-        features=features/features.sum(1, keepdim=True).clamp(min=1)
-    elif normalize_feature=='col':
-        features=features/features.sum(0, keepdim=True).clamp(min=1)
-    elif normalize_feature=='all':
-        features=features/features.sum().clamp(min=1)
+       
+    if normalize_feature in ['row','col','all']:
+        #print(features)
+        norm_feat_dim_map={'row':1,'col':0,'all':[0,1]}
+        norm_feat_dim=norm_feat_dim_map[normalize_feature]
+
+        if normalize_feature_method=='MinMaxScalar':
+            if isinstance(norm_feat_dim,int):
+                feat_min=torch.min(features,norm_feat_dim)[0]
+                feat_max=torch.max(features,norm_feat_dim)[0]
+            else:
+                feat_min=torch.min(features)
+                feat_max=torch.max(features)
+            
+            denominator=(feat_max-feat_min).clamp(min=1e-12)
+            #min值参考了：https://pytorch.org/docs/stable/generated/torch.nn.functional.normalize.html
+
+            if norm_feat_dim==1:
+                features=(features.T-feat_min)/denominator
+                features=features.T
+            else:
+                features=(features-feat_min)/denominator
+            #print(features)
+            
+        elif normalize_feature_method=='StandardScalar':
+            feat_mean=torch.mean(features,norm_feat_dim)
+            feat_std=torch.std(features,norm_feat_dim)
+            denominator=feat_std.clamp(min=1e-12)
+            if norm_feat_dim==1:
+                features=(features.T-feat_mean)/denominator
+                features=features.T
+            else:
+                features=(features-feat_mean)/denominator
+            #print(features)
+
+        else:
+            #以下代码参考了：https://pytorch-geometric.readthedocs.io/en/latest/_modules/torch_geometric/transforms/normalize_features.html
+            features=features/features.sum(norm_feat_dim, keepdim=True).clamp(min=1)
 
     model_name=model_name.lower()
     if model_name=='mlp':
