@@ -6,7 +6,10 @@ import numpy as np
 
 import math
 
-class Linear(nn.Module): 
+#基本上完全照着PTA原项目来的，没有自己调结构
+
+class Linear(nn.Module):
+    """模型结构：dropout+线性转换（默认无偏置）"""
     def __init__(self, in_features, out_features, dropout, bias=False):
         super(Linear, self).__init__()
         self.dropout = dropout
@@ -36,8 +39,16 @@ class Linear(nn.Module):
 
 
 class PTA(nn.Module): 
+    """
+    model_init_param需要nhid, dropout, epsilon, mode, K, alpha（没有给开PTS和PTD）
+    神经网络部分结构：Linear+relu+Linear
+    自定义损失函数
+    inference() 函数是post-processing（就类似C&S那样的）
+    TODO: 从PTA其实我可以得到灵感，就C&S感觉也可以这样每一epoch跟着一起post-ps啊，就可以输出
+        每一轮的loss和ACC值了。以后可以写！
+    """
     def __init__(self, nfeat, nhid, nclass, dropout, epsilon, K, alpha, mode=2):
-        # mode: 0-PTS, 1-PTS, 2-PTA
+        # mode: 0-PTS, 1-PTD, 2-PTA
         super(PTA, self).__init__()
         self.Linear1 = Linear(nfeat, nhid, dropout, bias=True)
         self.Linear2 = Linear(nhid, nclass, dropout, bias=True)

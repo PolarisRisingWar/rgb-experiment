@@ -6,7 +6,7 @@ class GGNN(nn.Module):
     """
     model_init_param需要num_layers,hidden_unit,dropout_rate
     model_forward_param需要x,edge_index
-    模型结构：线性网络+BN+dropout，num_layers层GatedGraphConv，BN+dropout，线性网络+BN+dropout
+    模型结构：线性网络+BN，num_layers层GatedGraphConv，线性网络+BN
     hidden_unit是state_dim。annotation_dim我这里用的是跟state_dim（hidden_dim）等长
     """
     def __init__(self,num_layers,hidden_unit,input_dim,output_dim,dropout_rate):
@@ -24,12 +24,8 @@ class GGNN(nn.Module):
     def forward(self,x,edge_index):
         x=self.lin1(x)
         x=self.bn1(x)
-        #x=F.relu(x)
-        #x=F.dropout(x,self.dropout_rate,self.training)
         x=self.conv(x,edge_index)
         x=self.bn2(x)
-        #x=F.relu(x)
-        #x=F.dropout(x,self.dropout_rate,self.training)
         x=self.lin2(x)
         
         return {'out':F.log_softmax(x, dim=1),'emb':x}

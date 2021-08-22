@@ -7,7 +7,7 @@ class GraphSAGE(nn.Module):
     """
     model_init_param需要num_layers,hidden_unit,dropout_rate
     model_forward_param需要x,edge_index
-    模型结构：1层线性网络，num_layers层(卷积网络+BN+dropout)，1层线性网络
+    模型结构：num_layers（最少为2）-1层(卷积网络+BN)+卷积网络
     """
     def __init__(self,num_layers,hidden_unit,input_dim,output_dim,dropout_rate):
         super(GraphSAGE,self).__init__()
@@ -27,8 +27,6 @@ class GraphSAGE(nn.Module):
         for i in range(self.num_layers-1):
             x=self.convs[i](x,edge_index)
             x=self.bns[i](x)
-            #x=F.dropout(x,p=self.dropout_rate,training=self.training)
-            #x=F.relu(x)
         x=self.convs[self.num_layers-1](x,edge_index)
         
         return {'out':F.log_softmax(x, dim=1),'emb':x}

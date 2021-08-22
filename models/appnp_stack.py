@@ -9,7 +9,7 @@ class APPNPStack(nn.Module):
     """
     model_init_param需要hidden_unit,K,alpha,dropout_rate
     model_forward_param需要x,edge_index
-    模型结构：1层(线性网络+BN+dropout)，1层(线性网络+BN+dropout)，1层APPNP
+    模型结构：1层(线性网络+BN)，1层线性网络，1层APPNP
     """
     def __init__(self,hidden_unit,input_dim,output_dim,K,alpha,dropout_rate):
         super(APPNPStack,self).__init__()
@@ -23,10 +23,8 @@ class APPNPStack(nn.Module):
 
     
     def forward(self,x,edge_index):
-        #x=F.dropout(x,p=self.dropout_rate,training=self.training)
         x=self.lin1(x)
         x=self.bn(x)
-        #x=F.dropout(x,p=self.dropout_rate,training=self.training)
         x=self.lin2(x)
         x=self.conv(x,edge_index)
         

@@ -208,6 +208,7 @@ def experiment(model_init_param:dict,
         else:
             #以下代码参考了：https://pytorch-geometric.readthedocs.io/en/latest/_modules/torch_geometric/transforms/normalize_features.html
             features=features/features.sum(norm_feat_dim, keepdim=True).clamp(min=1)
+            #顺便给出PyTorch的实现以供参考：https://pytorch.org/docs/stable/generated/torch.nn.functional.normalize.html#torch.nn.functional.normalize
 
     model_name=model_name.lower()
     if model_name=='mlp':
@@ -361,6 +362,7 @@ def experiment(model_init_param:dict,
         pass
     else:
         assert not model_name=='pta'
+        
         #TODO:打印原predictor上的输出，与经C&S后的结果作对比
         post=CorrectAndSmooth(**cs_param)
         y_soft=metric_result['test_op'].exp()

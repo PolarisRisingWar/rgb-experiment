@@ -6,7 +6,7 @@ class GAT(nn.Module):
     """
     model_init_param需要num_layers,hidden_unit,dropout_rate,heads
     model_forward_param需要x,edge_index
-    模型结构：num_layers（最少为2）层(卷积网络+BN+dropout)
+    模型结构：num_layers（最少为2）-1层(卷积网络+BN)+卷积网络
     """
     def __init__(self,num_layers,hidden_unit,input_dim,output_dim,dropout_rate,heads):
         super(GAT,self).__init__()
@@ -27,7 +27,6 @@ class GAT(nn.Module):
         for i in range(self.num_layers-1):
             x=self.convs[i](x,edge_index)
             x=self.bns[i](x)
-            #x=F.dropout(x,p=self.dropout_rate,training=self.training)
         x=self.convs[self.num_layers-1](x,edge_index)
         
         return {'out':F.log_softmax(x, dim=1),'emb':x}
