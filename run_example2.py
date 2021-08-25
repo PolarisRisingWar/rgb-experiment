@@ -12,7 +12,7 @@ import datetime
 
 starttime = datetime.datetime.now()
 
-cuda_index=2
+cuda_index=0
 model_num=9
 
 learning_rate=0.01
@@ -24,13 +24,14 @@ seed_number=10
 seeds=[random.randint(0,100000000) for i in range(seed_number)]
 
 #"""
-file_handle=open('whj_code2/integration_experiment/run_example2_output2.out',
+file_handle=open('whj_code2/integration_experiment/run_example2_output.out',
                 mode='a')  #追加
-file_handle.write('运行一个随机性更强、更正确的版本，BGP数据集有向图转无向图:\n')
+file_handle.write('ssn1数据集有向图转无向图:\n')
 #"""
 
-name_root_map=[('bgp','/data/wanghuijuan/dataset1/zjutoid2_ds')]
-for dn in range(1):  #遍历数据集（1个），其中有向图为[0] bgp
+name_root_map=[('bgp','/data/wanghuijuan/dataset1/zjutoid2_ds'),
+            ('ssn1','/data/wanghuijuan/dataset1/zjutoid2_ds'),]
+for dn in [1]:  #遍历数据集（2个），其中有向图为[0,1] bgp, ssn1
     accs_list=[]
     oom_model_index=set()
     for seed in seeds:

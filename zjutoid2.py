@@ -167,7 +167,7 @@ class zjutoid2():
             reorder_nodes：是否要对子图的节点重新从0开始索引。默认置True
         返回值：node-induced subgraph的edge_index
         """
-        if isinstance(nodes_set,list):  #list
+        if isinstance(nodes_set,list):  #子图节点索引构成的list
             new_graph_num_node=len(nodes_set)
         elif isinstance(nodes_set,Tensor) and nodes_set.dtype==torch.bool:  #mask
             new_graph_num_node=sum(nodes_set).item()
@@ -189,8 +189,8 @@ class zjutoid2():
 
 #测试部分
 """
-z=zjutoid2('bgp','/data/wanghuijuan/dataset1/zjutoid2_ds',specify_non_label_mask=True,
-        apply_sample=False,remove_non_label_node=True)
+z=zjutoid2('ssn1','/data/wanghuijuan/dataset1/zjutoid2_ds',specify_non_label_mask=False,
+        apply_sample=False,remove_non_label_node=False)
 print(z.data.is_directed())
 print(z.data)
 #print(z.data.edge_index.max())

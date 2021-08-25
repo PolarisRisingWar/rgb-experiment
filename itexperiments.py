@@ -421,7 +421,7 @@ def experiment(model_init_param:dict,
     
     if vis_feat:
         assert not model_name=='pta'
-        #TODO：新增对PTA模型的支持
+        
         #有没有传入图片名，如果有的话就用，如果没有的话就自定义
         if not isinstance(feat_pic_names_prefix,str):
             feat_pic_names_prefix=dataset_name+'_dataset_'+model_name+'_model'
@@ -580,6 +580,7 @@ def label_propagation(adj, labels, idx, K, alpha,device):
     y = y0
     
     #对负数标签（即无标签的数据），随便给个标签应付一下，反正不在mask里，没它们的事
+    #否则负数标签会导致F.one_hot报错
     y_nonlabel_mask=labels<0
     label_copy=copy(labels)
     label_copy[y_nonlabel_mask]=0
