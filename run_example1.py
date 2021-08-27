@@ -10,20 +10,20 @@ import datetime
 starttime = datetime.datetime.now()
 print(starttime)
 
-cuda_index=0
+cuda_index=1
 
 learning_rate=0.01
 epoch=300
 
 #随机生成seed_number个整数作为种子，跑模型：
-seed_number=1
+seed_number=10
 #seeds=[88444839, 57044214, 61447882, 85447514, 49198713, 74564747, 16901785, 9209019, 82043533, 13271186]
 seeds=[random.randint(0,100000000) for i in range(seed_number)]
 
 #"""
-file_handle=open('whj_code2/integration_experiment/run_example1_output.out',
+file_handle=open('whj_code2/integration_experiment/run_example1_output2.out',
                 mode='a')  #追加
-file_handle.write('DAGNN尝试性输出，有向图转无向图:\n')
+file_handle.write('DAGNN模型有向图转无向图:\n')
 #"""
 
 for dn in [0,2,3,6,11]:  #遍历数据集（13个），其中有向图为[0,2,3,6,11] github, elliptic, film, wiki, alpha

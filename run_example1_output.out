@@ -253,3 +253,20 @@ Elliptic	0.967
 Film	0.326
 Wiki	0.114
 Alpha	0.91
+
+
+DAGNN模型有向图:
+Github	0.82
+cora	0.891
+Elliptic	0.928
+Film	0.289
+CiteSeer	0.76
+PubMed	0.876
+Wiki	0.069
+Clothing	0.745
+Eletronics	0.65
+Dblp	0.421
+Yelpchi	0.855
+Alpha	0.933
+Weibo	0.875
+

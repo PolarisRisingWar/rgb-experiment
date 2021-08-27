@@ -35,3 +35,6 @@ bgp	0.615
 
 BGP数据集DAGNN模型有向图转无向图:
 bgp	0.629
+
+BGP数据集DAGNN模型有向图:
+bgp	0.604
