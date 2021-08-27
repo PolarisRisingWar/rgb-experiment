@@ -6,3 +6,4 @@ from models.gat import GAT
 from models.ggnn import GGNN
 from models.appnp_stack import APPNPStack
 from models.pta import PTA
+from models.dagnn import DAGNN

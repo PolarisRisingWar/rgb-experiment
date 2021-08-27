@@ -10,7 +10,7 @@ from zjutoid import zjutoid
 from visualize_feature import visualize_feature
 from initial_params import InitialParameters
 
-from models import MLP,GCN,GraphSAGE,GAT,GGNN,APPNPStack,GraphSAGE2,PTA
+from models import MLP,GCN,GraphSAGE,GAT,GGNN,APPNPStack,GraphSAGE2,PTA,DAGNN
 
 import torch
 import torch.nn as nn
@@ -231,6 +231,9 @@ def experiment(model_init_param:dict,
         model_forward_param={'x':features,'edge_index':data.edge_index}
     elif model_name=='appnpstack':
         model=APPNPStack(input_dim=input_dim,output_dim=output_dim,**model_init_param)
+        model_forward_param={'x':features,'edge_index':data.edge_index}
+    elif model_name=='dagnn':
+        model=DAGNN(input_dim=input_dim,output_dim=output_dim,**model_init_param)
         model_forward_param={'x':features,'edge_index':data.edge_index}
     elif model_name=='pta':
         edge_index=data.edge_index.cpu()
