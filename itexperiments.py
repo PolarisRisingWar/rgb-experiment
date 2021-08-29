@@ -411,8 +411,13 @@ def experiment(model_init_param:dict,
         #打印测试集上的混淆矩阵
         assert not model_name=='pta'
         #TODO:新增对PTA模型的支持
-        p=metric_result['pred']
-        l=metric_result['label']
+        
+        if post_cs:
+            p=pred
+            l=label
+        else:
+            p=metric_result['pred']
+            l=metric_result['label']
         cm=metrics.confusion_matrix(l.cpu(), p.cpu())
         print(cm)
     

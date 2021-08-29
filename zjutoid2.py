@@ -109,10 +109,10 @@ class zjutoid2():
     def make_mask(self,ratio):
         have_label_mask=~self.non_label_mask
         
-        bs=torch.tensor(list(range(self.num_nodes)),dtype=int)
-        bs_label=bs[have_label_mask]
-        num_have_label=len(bs_label)
-        bs_label_index=list(range(num_have_label))
+        bs=torch.tensor(list(range(self.num_nodes)),dtype=int)  #节点索引的tensor
+        bs_label=bs[have_label_mask]  #有标签的节点的索引
+        num_have_label=len(bs_label)  #有标签的节点的长度
+        bs_label_index=list(range(num_have_label))  #有标签节点的索引列表
         random.shuffle(bs_label_index)
 
         train_val_test_list=[int(i) for i in ratio.split('-')]
@@ -190,8 +190,18 @@ class zjutoid2():
 #测试部分
 """
 z=zjutoid2('ssn2','/data/wanghuijuan/dataset1/zjutoid2_ds',specify_non_label_mask=False,
-        apply_sample=False,remove_non_label_node=False)
+        apply_sample=False,remove_non_label_node=False,split_seed=14000094)
 print(z.data.is_directed())
 print(z.data)
+data=z.data
+print('训练集共'+str(data.train_mask.sum().item())+'个数据')
+print('验证集共'+str(data.val_mask.sum().item())+'个数据')
+print('测试集共'+str(data.test_mask.sum().item())+'个数据')
+print('训练集与验证集上有重复的数据共'+str(sum(data.train_mask & data.val_mask).item())+'个')
+print('训练集与测试集上有重复的数据共'+str(sum(data.train_mask & data.test_mask).item())+'个')
+print('验证集与测试集上有重复的数据共'+str(sum(data.val_mask & data.test_mask).item())+'个')
+for l in data.y.unique():
+    print(l)
+    print(data.y[data.y==l].shape)
 #print(z.data.edge_index.max())
 """
