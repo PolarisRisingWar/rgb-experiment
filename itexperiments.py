@@ -141,6 +141,8 @@ def experiment(model_init_param:dict,
         data=dataset.data
         #TODO:dataset会自动输出一些信息。等后期可以考虑优化这部分输出
     else:
+        data=data.clone()  #这个是为了防止影响data原数据（据我测试可以实现这一目标）
+
         #TODO：检查data中的mask参数，如果没有的话手动添加；如果形制不符（是类似PTA idx那种格式
         #需要修改格式）；如果是其他什么奇奇怪怪的格式直接重置mask
         

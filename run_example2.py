@@ -13,8 +13,8 @@ import datetime
 starttime = datetime.datetime.now()
 print(starttime)
 
-cuda_index=3
-model_num=1  #跑了几个模型
+cuda_index=1
+model_num=10  #跑了几个模型
 
 learning_rate=0.01
 epoch=300
@@ -27,19 +27,20 @@ seeds=[random.randint(0,100000000) for i in range(seed_number)]
 #"""
 file_handle=open('whj_code2/integration_experiment/run_example2_output2.out',
                 mode='a')  #追加
-file_handle.write('BGP数据集DAGNN模型有向图转无向图:\n')
+file_handle.write('SSN2数据集在所有模型上的指标结果，有向图转无向图:\n')
 #"""
 
 name_root_map=[('bgp','/data/wanghuijuan/dataset1/zjutoid2_ds'),
-            ('ssn1','/data/wanghuijuan/dataset1/zjutoid2_ds'),]
-for dn in [0]:  #遍历数据集（2个），其中有向图为[0,1] bgp, ssn1
+            ('ssn1','/data/wanghuijuan/dataset1/zjutoid2_ds'),
+            ('ssn2','/data/wanghuijuan/dataset1/zjutoid2_ds'),]
+for dn in [2]:  #遍历数据集（3个），其中有向图为[0,1] bgp, ssn1, ssn2
     file_handle.write(name_root_map[dn][0])
     accs_list=[]
     oom_model_index=set()
     for seed in seeds:
         data=zjutoid2(name_root_map[dn][0],name_root_map[dn][1],split_ratio='6-2-2',split_seed=seed).data
         acc_list=[]
-        for i in [8]:  #遍历模型（9个）
+        for i in range(9):  #遍历模型（9个）
             #print(i)
             try:
                 acc_dict=experiment(model_init_param=InitialParameters.default_init_params[i],
@@ -50,15 +51,17 @@ for dn in [0]:  #遍历数据集（2个），其中有向图为[0,1] bgp, ssn1
                                     need_all_metrics=False,
                                     normalize_feature=None,
                                     cuda_index=cuda_index,f1_average='micro')
+                #print(data.is_directed())
+                #break
                 acc_list.append(acc_dict['ACC'])
             except RuntimeError as e:  #一般来说就是OOM了……
                 oom_model_index.add(i)
+                acc_list.append(0)
                 #print(str(e))
                 #print(traceback.print_exc())
-                pass
         
         #MLP+C&S
-        """
+        #"""
         acc_dict=experiment(model_init_param={'num_layers':3,'hidden_unit':64,'dropout_rate':0.5},
                             model_name='MLP',
                             to_undirected_graph=True,
@@ -69,7 +72,7 @@ for dn in [0]:  #遍历数据集（2个），其中有向图为[0,1] bgp, ssn1
                             cuda_index=cuda_index,
                             specify_data=True,data=data,f1_average='micro')
         acc_list.append(acc_dict['ACC'])
-        """
+        #"""
         
         accs_list.append(acc_list)
 

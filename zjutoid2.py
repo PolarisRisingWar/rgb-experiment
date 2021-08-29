@@ -189,7 +189,7 @@ class zjutoid2():
 
 #测试部分
 """
-z=zjutoid2('ssn1','/data/wanghuijuan/dataset1/zjutoid2_ds',specify_non_label_mask=False,
+z=zjutoid2('ssn2','/data/wanghuijuan/dataset1/zjutoid2_ds',specify_non_label_mask=False,
         apply_sample=False,remove_non_label_node=False)
 print(z.data.is_directed())
 print(z.data)
