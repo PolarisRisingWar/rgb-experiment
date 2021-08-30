@@ -189,11 +189,20 @@ class zjutoid2():
 
 #测试部分
 """
-z=zjutoid2('ssn2','/data/wanghuijuan/dataset1/zjutoid2_ds',specify_non_label_mask=False,
+z=zjutoid2('ssn3','/data/wanghuijuan/dataset1/zjutoid2_ds',specify_non_label_mask=False,
         apply_sample=False,remove_non_label_node=False,split_seed=14000094)
 print(z.data.is_directed())
 print(z.data)
 data=z.data
+x=data.x
+print(sum(sum(x)))
+
+for paper_idx in range(x.size()[0]):
+    paper=x[paper_idx]
+    paper_sum=sum(paper).item()
+    if paper_sum>0:
+        print(paper_idx)
+
 print('训练集共'+str(data.train_mask.sum().item())+'个数据')
 print('验证集共'+str(data.val_mask.sum().item())+'个数据')
 print('测试集共'+str(data.test_mask.sum().item())+'个数据')
