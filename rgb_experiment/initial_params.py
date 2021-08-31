@@ -1,11 +1,11 @@
 import os
 
-father_dir_path=os.path.dirname(os.path.realpath(__file__))
+father_dir_path=os.path.dirname(os.path.realpath(__file__))  #rg_experiment的路径
 
 class InitialParameters:
-    default_data_path=r'/data/wanghuijuan/dataset1/zjutoid_ds'
-    default_pics_path=father_dir_path+r'/pics'
-    simhei_ttf_path=father_dir_path+r'/SimHei.ttf'
+    default_data_path=r'/data/wanghuijuan/dataset1/zjutoid_ds'  #zjutoid格式数据存放路径
+    default_pics_path=r'whj_code2/integration_experiment/pics'  #默认图片输出路径
+    simhei_ttf_path=father_dir_path+r'/SimHei.ttf'  #黑体字文件格式存储路径
     dataset_name_root_map=[{'dataset_name':'Github','dataset_root':default_data_path},
                             {'dataset_name':'cora','dataset_root':default_data_path},
                             {'dataset_name':'Elliptic','dataset_root':default_data_path},

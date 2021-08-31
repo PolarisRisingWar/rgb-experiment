@@ -5,12 +5,10 @@ import numpy as np
 import scipy.sparse as sp
 from scipy.sparse import coo_matrix
 
-from zjutoid import zjutoid
-
-from visualize_feature import visualize_feature
-from initial_params import InitialParameters
-
-from models import MLP,GCN,GraphSAGE,GAT,GGNN,APPNPStack,GraphSAGE2,PTA,DAGNN
+from .visualize_feature import visualize_feature
+from .initial_params import InitialParameters
+from .zjutoid import zjutoid
+from .models import MLP,GCN,GraphSAGE,GAT,GGNN,APPNPStack,GraphSAGE2,PTA,DAGNN
 
 import torch
 import torch.nn as nn

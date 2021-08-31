@@ -7,7 +7,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.font_manager import FontProperties
 
-from initial_params import InitialParameters
+from rgb_experiment.initial_params import InitialParameters
 
 def visualize_feature(x,
                     y=None,

@@ -6,7 +6,7 @@ import torch
 from torch_geometric.data import InMemoryDataset, download_url
 from torch_geometric.utils import num_nodes
 # from torch_geometric.io import read_planetoid_data
-from iozjutoid import read_zjutoid_data,read_file,index_to_mask
+from rgb_experiment.iozjutoid import read_zjutoid_data,read_file,index_to_mask
 from torch_geometric.data.makedirs import makedirs
 import  numpy as np
 from scipy.sparse import csr_matrix

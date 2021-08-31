@@ -31,3 +31,4 @@ class MLP(nn.Module):
         x=self.lins[self.num_layers-1](x)
         
         return {'out':F.log_softmax(x, dim=1),'emb':x}
+        
