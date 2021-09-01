@@ -11,12 +11,32 @@ import sys
 sys.path.extend(['您clone的GitHub项目的路径'])
 import rgb_experiment
 ```
-2. 
-3. 可以通过代码直接传入参数（见示例文件 run_example1.py），也可以通过配置文件传入参数（见示例文件 ini_example.py）
+2. 本项目的部分默认参数设置目前储存于 `rgb_experiment/initial_params.py` 文件中，如果您需要修改相应参数，需要进入文件进行修改。本项目计划后期修改为通过工作路径下的配置文件对这些数据进行传参，但是目前还需要在py文件内修改。
+3. 本项目的核心函数为 `experiment()` 函数，同时也提供了其他使用的辅助功能。
+调入函数的代码为：
+```python
+from rgb_experiment import experiment
+```
+4. 实验中需要 `torch_geometric.data.Data` 格式的图数据，您可以通过`experiment` 内置的功能通过 `zjutoid` 类导入，也可以通过其他方式直接得到Data数据并传入 `experiment` 函数。对数据格式的要求等注意事项见本节下的1.2部分。<br>
+    4.1 隐式调用 `zjutoid` 在 `experiment` 中传入数据（见 `examples/implicitly_zjutoid_example.py` 示例）
+    4.2 显示传入Data数据（见 `examples/explictly_data_example.py` 示例）
+5. 除直接通过代码传入参数外，也可以通过配置文件传入参数（代码见示例文件 `examples/ini_example.py` 示例，配置文件见 `ini_files` 文件夹下示例）
 ## 1.2 引用数据的方式
-1. experiment()函数中数据的默认路径可通过initial_datapath.py中 `default_data_path` 参数修改（**建议使用的方式**）。
-2. 类Planetoid格式，可使用zjutoid.py和iozjutoid.py处理：可直接将文件根目录路径传入 `experiment()`，要求目录root下raw文件夹下装载数据文件，root名称即为数据集名称，数据文件中间名需要是数据集名称的全小写格式
-3. `x.pt` &nbsp; `y.pt` &nbsp; `edge_index.pt`（Tensor.save()结果）形式数据可使用zjutoid2.py处理为 `torch_geometric.data.Data` 格式。详情可参考该文件注释。
+1. experiment()函数中数据的默认路径可通过initial_datapath.py中 `default_data_path` 参数修改。
+2. 类Planetoid格式，可使用zjutoid.py和iozjutoid.py处理：可直接将文件根目录路径传入 `experiment()`
+要求目录root下raw文件夹下装载数据文件，root文件夹名即为数据集名称，数据文件中间名需要是数据集名称的全小写格式。
+以Github数据下raw文件夹中存放的原始数据为例：
+> ind.github.ally
+ind.github.test.index
+ind.github.ty
+ind.github.y
+ind.github.allx
+ind.github.graph
+ind.github.tx
+ind.github.x
+
+通过zjutoid类调用数据的代码见 `examples/zjutoid_example.py` 示例
+3. `x.pt` &nbsp; `y.pt` &nbsp; `edge_index.pt`（Tensor.save()结果）形式数据可使用rd2pd.py 中的类 RD2PD 处理为 `torch_geometric.data.Data` 格式。详情可参考该文件注释。
 4. `torch_geometric.data.Data` 格式数据：可直接将数据传入 `experiment()`。
 您可以提前在data中添加 `train_mask/val_mask/test_mask` 属性（要求是尺寸为 [num_nodes] 的布尔tensor），也可以通过设置 `remake_data_mask=True` 来命令 `experiment()` 自动配置相应属性。
 ## 1.3 增加模型的方式
