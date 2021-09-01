@@ -1,19 +1,24 @@
 本项目/文件夹只包含代码和配置文件等。数据文件未包含。
 
 [TOC]
-（注：我用VSCode的MPE看的_(:з」∠)_别的Markdown预览方式可能不支持部分语法）
+（注：我用VSCode的MPE边看边写的，别的Markdown预览方式可能不支持部分语法）
 
 # 1. quick start
-## 1.1 引用数据的方式
+## 1.1 调用函数的方式
+1. 本项目在后续开发过程中可能会上pypi，但是暂时还是一个单纯的package，需要手动引入目录后才能调用包：
+```python
+import sys
+sys.path.extend(['您clone的GitHub项目的路径'])
+import rgb_experiment
+```
+2. 
+3. 可以通过代码直接传入参数（见示例文件 run_example1.py），也可以通过配置文件传入参数（见示例文件 ini_example.py）
+## 1.2 引用数据的方式
 1. experiment()函数中数据的默认路径可通过initial_datapath.py中 `default_data_path` 参数修改（**建议使用的方式**）。
 2. 类Planetoid格式，可使用zjutoid.py和iozjutoid.py处理：可直接将文件根目录路径传入 `experiment()`，要求目录root下raw文件夹下装载数据文件，root名称即为数据集名称，数据文件中间名需要是数据集名称的全小写格式
 3. `x.pt` &nbsp; `y.pt` &nbsp; `edge_index.pt`（Tensor.save()结果）形式数据可使用zjutoid2.py处理为 `torch_geometric.data.Data` 格式。详情可参考该文件注释。
 4. `torch_geometric.data.Data` 格式数据：可直接将数据传入 `experiment()`。
 您可以提前在data中添加 `train_mask/val_mask/test_mask` 属性（要求是尺寸为 [num_nodes] 的布尔tensor），也可以通过设置 `remake_data_mask=True` 来命令 `experiment()` 自动配置相应属性。
-## 1.2 调用函数的方式
-1. 建议直接在本目录下运行代码，引入 `experiment()` 函数。示例代码：`from itexperiments import experiment`
-2. 如果您希望在其他地方运行，建议使用 `sys.path.extend()` 方法将该目录引入，然后您就可以直接使用上一步的示例代码引入 `experiment()` 函数了。
-3. 可以通过代码直接传入参数（见示例文件 run_example1.py），也可以通过配置文件传入参数（见示例文件 ini_example.py）
 ## 1.3 增加模型的方式
 1. 模型文件都放在了 `.models` 文件夹下，可直接将含有以 `torch.nn.Module` 为基类 的模型类文件放在该文件夹中，并在该文件夹下的`__init__.py` 中引用模型，然后在 `exeriment()` 中引用该模型，并在 `if model_name==` 判断语句中增加对该模型的处理即可。
 2. 一般来说，您的模型需要返回一个字典，其中键x的value是输出值，键emb的value建议是输出层前一层的节点嵌入值。

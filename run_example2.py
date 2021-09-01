@@ -6,6 +6,7 @@ sys.path.extend(['whj_code2/integration_experiment'])
 from rgb_experiment.itexperiments import experiment
 from rgb_experiment.initial_params import InitialParameters
 from rgb_experiment.zjutoid2 import zjutoid2
+from rgb_experiment.rd2pd import RD2PD
 
 import random
 
@@ -42,7 +43,7 @@ for dn in [5]:  #遍历数据集（6个）
     accs_list=[]
     oom_model_index=set()
     for seed in seeds:
-        data=zjutoid2(name_root_map[dn][0],name_root_map[dn][1],split_ratio='6-2-2',split_seed=seed).data
+        data=RD2PD(name_root_map[dn][0],name_root_map[dn][1],split_ratio='6-2-2',split_seed=seed).data
         acc_list=[]
         for i in range(9):  #遍历模型（9个）
             #print(InitialParameters.model_names[i])
