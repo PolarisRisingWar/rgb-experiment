@@ -1,10 +1,11 @@
 #在我自己整的数据集上运行baseline
 
-from itexperiments import experiment
-from initial_params import InitialParameters
-from zjutoid2 import zjutoid2
+import sys
+sys.path.extend(['whj_code2/integration_experiment'])
 
-import traceback
+from rgb_experiment.itexperiments import experiment
+from rgb_experiment.initial_params import InitialParameters
+from rgb_experiment.zjutoid2 import zjutoid2
 
 import random
 
@@ -13,7 +14,7 @@ import datetime
 starttime = datetime.datetime.now()
 print(starttime)
 
-cuda_index=3
+cuda_index=0
 model_num=10  #跑了几个模型（最后输出的时候算平均值用）
 
 learning_rate=0.01
@@ -25,17 +26,18 @@ seed_number=10
 seeds=[random.randint(0,100000000) for i in range(seed_number)]
 
 #"""
-file_handle=open('whj_code2/integration_experiment/run_example2_output2.out',
+file_handle=open('whj_code2/integration_experiment/run_example2_output.out',
                 mode='a')  #追加
-file_handle.write('SSN4数据集在全部模型上的结果，有向图转无向图:\n')
+file_handle.write('SSN5有向图转无向图:\n')
 #"""
 
 name_root_map=[('bgp','/data/wanghuijuan/dataset1/zjutoid2_ds'),
             ('ssn1','/data/wanghuijuan/dataset1/zjutoid2_ds'),
             ('ssn2','/data/wanghuijuan/dataset1/zjutoid2_ds'),
             ('ssn3','/data/wanghuijuan/dataset1/zjutoid2_ds'),
-            ('ssn4','/data/wanghuijuan/dataset1/zjutoid2_ds'),]
-for dn in [4]:  #遍历数据集（5个）
+            ('ssn4','/data/wanghuijuan/dataset1/zjutoid2_ds'),
+            ('ssn5','/data/wanghuijuan/dataset1/zjutoid2_ds'),]
+for dn in [5]:  #遍历数据集（6个）
     file_handle.write(name_root_map[dn][0])
     accs_list=[]
     oom_model_index=set()

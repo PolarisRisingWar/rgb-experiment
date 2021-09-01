@@ -149,6 +149,8 @@ def experiment(model_init_param:dict,
             remake_mask(data,dataset_split_ratio,dataset_split_seed)
         
     if to_undirected_graph:
+        #print(data.edge_index)
+        #print(data.num_nodes)
         data.edge_index = to_undirected(data.edge_index,num_nodes=data.num_nodes)
 
     device=torch.device('cuda:'+str(cuda_index) if torch.cuda.is_available() else "cpu")
