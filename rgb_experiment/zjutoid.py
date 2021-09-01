@@ -58,7 +58,7 @@ class zjutoid(InMemoryDataset):
             data = self.get(0)
             train_val_test_list=[int(i) for i in ratio.split('-')]
             #TODO:float形式
-            print(train_val_test_list)
+            #print(train_val_test_list)
             while True:
                 if not ratio_random:
                     random.seed(seed)
@@ -87,7 +87,7 @@ class zjutoid(InMemoryDataset):
                 if self.check_train_data(data):
                     break
                 seed+=1
-            print("seed:"+str(seed))
+            #print("seed:"+str(seed))
             self.data, self.slices = self.collate([data])
         elif split == 'fixed':
             if self.name == 'Yelpchi':
@@ -152,7 +152,7 @@ class zjutoid(InMemoryDataset):
         for c in range(num_classes):
             if c not in the_train_y:
                 return False
-        print("check_train_data yes!")
+        #print("check_train_data yes!")
         return True
     def clean_unknown_mask(self):
         if self.name != 'Elliptic':
