@@ -15,7 +15,7 @@ import datetime
 starttime = datetime.datetime.now()
 print(starttime)
 
-cuda_index=0
+cuda_index=1
 model_num=10  #跑了几个模型（最后输出的时候算平均值用）
 
 learning_rate=0.01
@@ -27,23 +27,27 @@ seed_number=10
 seeds=[random.randint(0,100000000) for i in range(seed_number)]
 
 #"""
-file_handle=open('whj_code2/integration_experiment/run_example2_output.out',
+file_handle=open('whj_code2/integration_experiment/run_example2_output2.out',
                 mode='a')  #追加
-file_handle.write('SSN5有向图转无向图:\n')
+file_handle.write('SSN7有向图转无向图:\n')
 #"""
 
-name_root_map=[('bgp','/data/wanghuijuan/dataset1/zjutoid2_ds'),
-            ('ssn1','/data/wanghuijuan/dataset1/zjutoid2_ds'),
-            ('ssn2','/data/wanghuijuan/dataset1/zjutoid2_ds'),
-            ('ssn3','/data/wanghuijuan/dataset1/zjutoid2_ds'),
-            ('ssn4','/data/wanghuijuan/dataset1/zjutoid2_ds'),
-            ('ssn5','/data/wanghuijuan/dataset1/zjutoid2_ds'),]
-for dn in [5]:  #遍历数据集（6个）
+rd2pd_root='/data/wanghuijuan/dataset2/rd2pd_ds'
+name_root_map=[('bgp',rd2pd_root),
+            ('ssn1',rd2pd_root),
+            ('ssn2',rd2pd_root),
+            ('ssn3',rd2pd_root),
+            ('ssn4',rd2pd_root),
+            ('ssn5',rd2pd_root),
+            ('ssn6',rd2pd_root),
+            ('ssn7',rd2pd_root),]
+for dn in [7]:  #遍历数据集（8个）
     file_handle.write(name_root_map[dn][0])
     accs_list=[]
     oom_model_index=set()
     for seed in seeds:
         data=RD2PD(name_root_map[dn][0],name_root_map[dn][1],split_ratio='6-2-2',split_seed=seed).data
+        #print(data)
         acc_list=[]
         for i in range(9):  #遍历模型（9个）
             #print(InitialParameters.model_names[i])
@@ -64,7 +68,8 @@ for dn in [5]:  #遍历数据集（6个）
             except RuntimeError as e:  #一般来说就是OOM了……
                 oom_model_index.add(i)
                 acc_list.append(0)
-                #print(str(e))
+                print(InitialParameters.model_names[i])
+                print(str(e))
                 #print(traceback.print_exc())
         
         #MLP+C&S

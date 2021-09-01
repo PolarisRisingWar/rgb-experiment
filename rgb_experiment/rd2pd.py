@@ -1,9 +1,6 @@
-#数据文件夹中的文件：torch.Tensor格式的数据
-#y.pt：分类任务：-1-(num_class-1)的数字，-1表示该节点无标签 (转换为LongTensor)
-#x.pt
-#edge_index.pt（不限制必须是LongTensor，但是我写的都是的）
-
 import datetime
+
+import numpy as np
 
 import torch
 from torch.functional import Tensor
@@ -14,6 +11,9 @@ import random
 
 #函数部分
 class RD2PD():
+    """
+    raw data to pytorch_geometric data
+    """
     def __init__(self,dataset_name:str,dataset_root:str,
             split_method:str='ratio',split_seed=1234567,
             split_ratio:str='6-2-2',num_train_per_class:int=20,num_val:int=500,
@@ -49,10 +49,14 @@ class RD2PD():
         self.data：PyG的Data格式图数据
         属性：x, y, edge_index, train_mask, val_mask, test_mask, non_label_mask (optional)
         """
-        x=torch.load(dataset_root+'/'+dataset_name+'/x.pt')
-        y=torch.load(dataset_root+'/'+dataset_name+'/y.pt')
+        numpy_x=np.load(dataset_root+'/'+dataset_name+'/x.npy')
+        x=torch.from_numpy(numpy_x)
+        x=x.float()
+        numpy_y=np.load(dataset_root+'/'+dataset_name+'/y.npy')
+        y=torch.from_numpy(numpy_y)
         y=y.long()
-        edge_index=torch.load(dataset_root+'/'+dataset_name+'/edge_index.pt')
+        numpy_edge_index=np.load(dataset_root+'/'+dataset_name+'/edge_index.npy')
+        edge_index=torch.from_numpy(numpy_edge_index)
         edge_index=edge_index.long()
 
         self.num_nodes=x.size()[0]
@@ -189,7 +193,7 @@ class RD2PD():
 
 #测试部分
 """
-z=RD2PD('ssn5','/data/wanghuijuan/dataset1/zjutoid2_ds',specify_non_label_mask=False,
+z=RD2PD('ssn6','/data/wanghuijuan/dataset2/rd2pd_ds',specify_non_label_mask=False,
         apply_sample=False,remove_non_label_node=False,split_seed=14000094)
 print(z.data.is_directed())
 print(z.data)
