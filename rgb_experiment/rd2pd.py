@@ -9,6 +9,8 @@ from torch_geometric.data import Data
 
 import random
 
+from .utils import get_whole_mask
+
 #函数部分
 class RD2PD():
     """
@@ -96,7 +98,10 @@ class RD2PD():
 
         #配置train_val_test mask：注意没有标签的节点不参与配置
         if split_method=='ratio':
-            self.remake_mask(data,split_ratio)
+            (train_mask,val_mask,test_mask)=get_whole_mask(y,split_ratio,split_seed)
+            data.train_mask=train_mask
+            data.val_mask=val_mask
+            data.test_mask=test_mask
         
         self.data=data
 
@@ -107,59 +112,6 @@ class RD2PD():
 
     def download_data(self):
         pass
-
-
-
-    def make_mask(self,ratio):
-        have_label_mask=~self.non_label_mask
-        
-        bs=torch.tensor(list(range(self.num_nodes)),dtype=int)  #节点索引的tensor
-        bs_label=bs[have_label_mask]  #有标签的节点的索引
-        num_have_label=len(bs_label)  #有标签的节点的长度
-        bs_label_index=list(range(num_have_label))  #有标签节点的索引列表
-        random.shuffle(bs_label_index)
-
-        train_val_test_list=[int(i) for i in ratio.split('-')]
-        random.seed(self.split_seed)
-        tvt_sum=sum(train_val_test_list)
-        tvt_ratio_list=[i/tvt_sum for i in train_val_test_list]
-        train_end_index=int(tvt_ratio_list[0]*num_have_label)
-        val_end_index=train_end_index+int(tvt_ratio_list[1]*num_have_label)
-        
-        train_mask_index=bs_label_index[:train_end_index]
-        val_mask_index=bs_label_index[train_end_index:val_end_index]
-        test_mask_index=bs_label_index[val_end_index:]
-        
-        train_mask=torch.zeros(self.num_nodes,dtype=torch.bool)
-        train_mask[bs_label[train_mask_index]]=True
-        val_mask=torch.zeros(self.num_nodes,dtype=torch.bool)
-        val_mask[bs_label[val_mask_index]]=True
-        test_mask=torch.zeros(self.num_nodes,dtype=torch.bool)
-        test_mask[bs_label[test_mask_index]]=True
-
-        return (train_mask,val_mask,test_mask)
-
-    def check_train_containing(self,train_mask,y):
-        """（仅用于分类任务）检查train_mask中是否含有y中所有的标签（-1不算）"""
-        for label in y.unique():
-            l=label.item()
-            if l==-1:
-                continue
-            if l not in y[train_mask]:
-                return False
-        return True
-
-    def remake_mask(self,data,ratio):
-        """直接覆盖原data的train_mask, val_mask, test_mask三个属性"""
-        while True:
-            (train_mask,val_mask,test_mask)=self.make_mask(ratio)
-            if self.check_train_containing(train_mask,data.y):
-                data.train_mask=train_mask
-                data.val_mask=val_mask
-                data.test_mask=test_mask
-                break
-            else:
-                self.split_seed+=1
     
 
 
@@ -186,36 +138,3 @@ class RD2PD():
             n_idx[nodes_set] = torch.arange(new_graph_num_node)
             edge_index = n_idx[edge_index]
         return edge_index
-
-
-
-
-
-#测试部分
-"""
-z=RD2PD('ssn6','/data/wanghuijuan/dataset2/rd2pd_ds',specify_non_label_mask=False,
-        apply_sample=False,remove_non_label_node=False,split_seed=14000094)
-print(z.data.is_directed())
-print(z.data)
-data=z.data
-x=data.x
-print(sum(sum(x)))
-
-for paper_idx in range(x.size()[0]):
-    paper=x[paper_idx]
-    paper_sum=sum(paper).item()
-    if paper_sum>0:
-        print(paper_idx)
-    break
-
-print('训练集共'+str(data.train_mask.sum().item())+'个数据')
-print('验证集共'+str(data.val_mask.sum().item())+'个数据')
-print('测试集共'+str(data.test_mask.sum().item())+'个数据')
-print('训练集与验证集上有重复的数据共'+str(sum(data.train_mask & data.val_mask).item())+'个')
-print('训练集与测试集上有重复的数据共'+str(sum(data.train_mask & data.test_mask).item())+'个')
-print('验证集与测试集上有重复的数据共'+str(sum(data.val_mask & data.test_mask).item())+'个')
-for l in data.y.unique():
-    print(l)
-    print(data.y[data.y==l].shape)
-#print(z.data.edge_index.max())
-"""

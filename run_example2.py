@@ -29,7 +29,7 @@ seeds=[random.randint(0,100000000) for i in range(seed_number)]
 #"""
 file_handle=open('whj_code2/integration_experiment/run_example2_output2.out',
                 mode='a')  #追加
-file_handle.write('SSN7有向图转无向图:\n')
+file_handle.write('SSN7修bug后：有向图转无向图:\n')
 #"""
 
 rd2pd_root='/data/wanghuijuan/dataset2/rd2pd_ds'
