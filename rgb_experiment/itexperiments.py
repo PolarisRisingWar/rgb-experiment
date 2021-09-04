@@ -390,6 +390,8 @@ def experiment(model_init_param:dict,
         plt.rcParams['axes.unicode_minus'] = False
 
         #TODO:plt.title内容也可以作为入参传入
+        if specify_data:
+            dataset_name=''
         plt.title(dataset_name+'数据集在'+model_name+'模型上的loss',fontproperties=font)
         plt.plot(train_losses, label="training loss")
         plt.plot(val_losses, label="validating loss")
