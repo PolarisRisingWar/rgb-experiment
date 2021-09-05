@@ -7,6 +7,8 @@ from torch.functional import Tensor
 
 from torch_geometric.data import Data
 
+from torch_sparse import coalesce
+
 import random
 
 from .utils import get_whole_mask
@@ -52,14 +54,14 @@ class RD2PD():
         属性：x, y, edge_index, train_mask, val_mask, test_mask, non_label_mask (optional)
         """
         numpy_x=np.load(dataset_root+'/'+dataset_name+'/x.npy')
-        x=torch.from_numpy(numpy_x)
-        x=x.float()
+        x=torch.from_numpy(numpy_x).to(torch.float)
         numpy_y=np.load(dataset_root+'/'+dataset_name+'/y.npy')
-        y=torch.from_numpy(numpy_y)
-        y=y.long()
+        y=torch.from_numpy(numpy_y).to(torch.long)
         numpy_edge_index=np.load(dataset_root+'/'+dataset_name+'/edge_index.npy')
-        edge_index=torch.from_numpy(numpy_edge_index)
-        edge_index=edge_index.long()
+        edge_index=torch.from_numpy(numpy_edge_index).to(torch.long)
+        #edge_index, _ = coalesce(edge_index, None, x.size(0), x.size(0))
+        #这句话是不知道该不该加……看whj_code2/whj_dataset1/zjutoid2/wikipedianetwork.py
+        #的效果感觉是去掉重边的意思
 
         self.num_nodes=x.size()[0]
         self.split_seed=split_seed
