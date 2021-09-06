@@ -6,6 +6,7 @@ import torch
 from torch.functional import Tensor
 
 from torch_geometric.data import Data
+from torch_geometric.utils import remove_self_loops
 
 from torch_sparse import coalesce
 
@@ -36,6 +37,7 @@ class RD2PD():
         TODO：split_method为'default'时，返回内置的数据集mask（但是要抽样啊啥的之后又咋整？）
         TODO：split_method为'random'时，参考Planetoid类的数据集划分方式
             使用入参num_train_per_class num_val num_test进行划分（如果超过了节点数需要判断）
+        TODO: split_method为`classification`时，使用get_classification_mask方法
         apply_sample：是否应用图采样技术
         sample_method为'random'时
             如果sample_criterion为'node'，随机抽样节点，返回node-induced subgraph
@@ -62,6 +64,9 @@ class RD2PD():
         #edge_index, _ = coalesce(edge_index, None, x.size(0), x.size(0))
         #这句话是不知道该不该加……看whj_code2/whj_dataset1/zjutoid2/wikipedianetwork.py
         #的效果感觉是去掉重边的意思
+
+        #edge_index, _ = remove_self_loops(edge_index)
+        #Planetoid部分的代码
 
         self.num_nodes=x.size()[0]
         self.split_seed=split_seed

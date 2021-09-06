@@ -7,8 +7,9 @@ from scipy.sparse import coo_matrix
 
 from .visualize_feature import visualize_feature
 from .initial_params import InitialParameters
-from .zjutoid import zjutoid
+from .rd2pd import RD2PD
 from .models import MLP,GCN,GraphSAGE,GAT,GGNN,APPNPStack,GraphSAGE2,PTA,DAGNN
+from .utils import get_whole_mask,get_classification_mask
 
 import torch
 import torch.nn as nn
@@ -134,10 +135,9 @@ def experiment(model_init_param:dict,
     tm.f1_average=f1_average
 
     if not specify_data:
-        dataset=zjutoid(root=dataset_root,name=dataset_name,
-                split=dataset_split_mode,ratio=dataset_split_ratio,seed=dataset_split_seed)
+        dataset=RD2PD(dataset_root=dataset_root,dataset_name=dataset_name,
+                split_method=dataset_split_mode,split_ratio=dataset_split_ratio,split_seed=dataset_split_seed)
         data=dataset.data
-        #TODO:dataset会自动输出一些信息。等后期可以考虑优化这部分输出
     else:
         data=data.clone()  #这个是为了防止影响data原数据（据我测试可以实现这一目标）
 
@@ -145,8 +145,11 @@ def experiment(model_init_param:dict,
         #需要修改格式）；如果是其他什么奇奇怪怪的格式直接重置mask
         
         if remake_data_mask:  #直接重置data的mask
-            #TODO：把remake_mask函数同步成zjutoid2里的格式
-            remake_mask(data,dataset_split_ratio,dataset_split_seed)
+            (train_mask,val_mask,test_mask)=get_whole_mask(data.y,dataset_split_ratio,dataset_split_seed)
+            data.train_mask=train_mask
+            data.val_mask=val_mask
+            data.test_mask=test_mask
+        #TODO:支持其他划分数据集的方式
         
     if to_undirected_graph:
         #print(data.edge_index)
@@ -505,52 +508,6 @@ def compare_pred_label(pred,label,need_all_metrics):
     return {'ACC':accuracy,'precision_score':precision_score,
     'recall_score':recall_score,'f1_score':f1_score}
 
-
-
-
-def make_mask(ratio,num_nodes,seed):
-    train_val_test_list=[int(i) for i in ratio.split('-')]
-    random.seed(seed)
-    tvt_sum=sum(train_val_test_list)
-    tvt_ratio_list=[i/tvt_sum for i in train_val_test_list]
-    train_end_index=int(tvt_ratio_list[0]*num_nodes)
-    val_end_index=train_end_index+int(tvt_ratio_list[1]*num_nodes)
-    
-    bs=list(range(num_nodes))
-    random.shuffle(bs)
-    
-    train_mask_index=bs[:train_end_index]
-    val_mask_index=bs[train_end_index:val_end_index]
-    test_mask_index=bs[val_end_index:]
-    
-    train_mask=torch.tensor([False for i in range(num_nodes)])
-    train_mask[train_mask_index]=True
-    val_mask=torch.tensor([False for i in range(num_nodes)])
-    val_mask[val_mask_index]=True
-    test_mask=torch.tensor([False for i in range(num_nodes)])
-    test_mask[test_mask_index]=True
-
-    return (train_mask,val_mask,test_mask)
-
-def check_train_containing(train_mask,y):
-    """（仅用于分类任务）检查train_mask中是否含有y中所有的标签"""
-    for label in y.unique():
-        l=label.item()
-        if l not in y[train_mask]:
-            return False
-    return True
-
-def remake_mask(data,ratio,seed=1234567):
-    """直接覆盖原data的train_mask, val_mask, test_mask三个属性"""
-    while True:
-        (train_mask,val_mask,test_mask)=make_mask(ratio,data.num_nodes,seed)
-        if check_train_containing(train_mask,data.y):
-            data.train_mask=train_mask
-            data.val_mask=val_mask
-            data.test_mask=test_mask
-            break
-        else:
-            seed+=1
 
 
 

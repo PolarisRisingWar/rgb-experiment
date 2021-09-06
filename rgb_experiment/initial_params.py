@@ -1,24 +1,19 @@
 import os
 
-father_dir_path=os.path.dirname(os.path.realpath(__file__))  #rg_experiment的路径
+father_dir_path=os.path.dirname(os.path.realpath(__file__))  #rgb_experiment的路径
 
 class InitialParameters:
-    default_data_path=r'/data/wanghuijuan/dataset1/zjutoid_ds'  #zjutoid格式数据存放路径
+    default_data_path=r'/data/wanghuijuan/dataset2/rd2pd_ds'  #rd2pd格式数据存放路径
     default_pics_path=r'whj_code2/integration_experiment/pics'  #默认图片输出路径
     simhei_ttf_path=father_dir_path+r'/SimHei.ttf'  #黑体字文件格式存储路径
-    dataset_name_root_map=[{'dataset_name':'Github','dataset_root':default_data_path},
-                            {'dataset_name':'cora','dataset_root':default_data_path},
-                            {'dataset_name':'Elliptic','dataset_root':default_data_path},
-                            {'dataset_name':'Film','dataset_root':default_data_path},
-                            {'dataset_name':'CiteSeer','dataset_root':default_data_path},
-                            {'dataset_name':'PubMed','dataset_root':default_data_path},
-                            {'dataset_name':'Wiki','dataset_root':default_data_path},
-                            {'dataset_name':'Clothing','dataset_root':default_data_path},
-                            {'dataset_name':'Eletronics','dataset_root':default_data_path},
-                            {'dataset_name':'Dblp','dataset_root':default_data_path},
-                            {'dataset_name':'Yelpchi','dataset_root':default_data_path},
-                            {'dataset_name':'Alpha','dataset_root':default_data_path},
-                            {'dataset_name':'Weibo','dataset_root':default_data_path}]
+
+    #以下数据集名称对应的数据集都放在default_data_path下子文件夹同数据集名的位置处
+    dataset_names1=['cora','citeseer','pubmed','Github','Elliptic','Film','Wiki','Clothing',
+                    'Electronics','Dblp','Yelpchi','Alpha','Weibo','bgp','ssn5','ssn7',
+                    'chameleon','squirrel','Wisconsin','Aids','Nba','Texas','Cornell',
+                    'Pokec_z']
+    dataset_names2=['ssn1','ssn2','ssn3','ssn5','ssn6']
+    #dataset_names2是搞得不太好的图数据，一般不用
 
     #注意以下两个参数之间是要一一对应的，之所以没合一起主要是因为那样就太长了
     #9个模型+C&S

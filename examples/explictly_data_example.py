@@ -1,9 +1,7 @@
 #通过PyG.datasets直接获得Data格式数据（也可以通过其他方式获取数据）
 
 import sys
-
 sys.path.extend(['whj_code2/integration_experiment'])
-
 from rgb_experiment import experiment
 
 from torch_geometric.datasets import WebKB

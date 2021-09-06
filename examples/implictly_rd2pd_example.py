@@ -2,9 +2,7 @@
 #cora数据集在MLP模型上运行，打印准确率
 
 import sys
-
 sys.path.extend(['whj_code2/integration_experiment'])
-
 from rgb_experiment import experiment
 
 #experiment函数可以自动通过zjutoid类传参，不需要显示调用zjutoid类
