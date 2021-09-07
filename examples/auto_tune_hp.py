@@ -1,5 +1,8 @@
 #本函数用于自动为数据集调参（贪心算法，调用experiment函数来运行模型）
-from itexperiments import experiment
+import sys
+sys.path.extend(['whj_code2/integration_experiment'])
+from rgb_experiment import experiment
+
 import random
 
 def auto_tune_hp(dataset_name,dataset_root,hp,model_name):

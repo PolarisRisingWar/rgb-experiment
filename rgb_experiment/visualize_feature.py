@@ -27,10 +27,9 @@ def visualize_feature(x,
     pca=PCA(n_components=2)
     x=pca.fit_transform(x)
     plt.scatter(x[:,0],x[:,1],c=y)
-    #TODO:cmap试了几种，在二分类标签上都不好看
+    #TODO:cmap试了几种，在二分类标签上都不好看。干脆放弃治疗
     #考虑按照分类数不同来用不同的内置colormap，或者直接自定义
 
-    #TODO:plt的title也可以自定义
     plt.title(title,fontproperties=font)
 
     plt.savefig(pics_root+'/'+pic_name)
