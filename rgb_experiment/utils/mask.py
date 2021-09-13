@@ -41,6 +41,7 @@ def get_classification_mask(y,total_node_num,ratio:str,seed:int=1234567):
     入参：
     y=data.y
     total_node_num=data.num_nodes
+    TODO: 那个total_node_num可以用len(y)替代，但是我用过这个函数的位置太多了，以后再慢慢改吧
     """
     train_mask=torch.zeros(total_node_num,dtype=torch.bool)
     val_mask=torch.zeros(total_node_num,dtype=torch.bool)
@@ -100,3 +101,38 @@ def get_order(ratio:str,masked_index:Tensor,total_node_num:int,seed:int=1234567)
     return (train_mask,val_mask,test_mask)
 
 
+
+def get_random_mask(y:Tensor,num_train_per_class:int,num_val:int,num_test:int,seed:int):
+    """
+    返回random格式的数据集划分mask：
+        每一类抽取num_train_per_class个节点，作为训练集
+        从其他有标签数据中抽取num_val个节点，作为验证集；num_test个节点，作为测试集
+    参考https://pytorch-geometric.readthedocs.io/en/latest/_modules/torch_geometric/datasets/planetoid.html
+    TODO:节点数不够怎么办
+    """
+    generator=torch.Generator()
+    generator.manual_seed(seed)
+
+    total_node_num=len(y)
+    train_mask=torch.zeros(total_node_num,dtype=torch.bool)
+    val_mask=torch.zeros(total_node_num,dtype=torch.bool)
+    test_mask=torch.zeros(total_node_num,dtype=torch.bool)
+    for c in y.unique():
+        label=c.item()
+        if label==-1:
+            continue
+        idx = (y == label).nonzero(as_tuple=False).view(-1)  #据我所知应该跟上面那句同义
+        #但是这个view()总使我心存疑虑，就它到底什么时候需要用contiguous()？
+        idx = idx[torch.randperm(idx.size(0),generator=generator)[:num_train_per_class]]
+        train_mask[idx] = True
+
+    y_have_label=y!=-1  #无标签的节点为False，有标签的节点为True的mask
+    remaining=~train_mask  #训练集节点为False，非训练集节点为True的mask
+    remaining=remaining & y_have_label  #非训练集且有标签的节点为True的mask
+    remaining = remaining.nonzero(as_tuple=False).view(-1)  #上一mask对应的索引
+    remaining = remaining[torch.randperm(remaining.size(0))]  #shuffle该索引
+
+    val_mask[remaining[:num_val]] = True
+    test_mask[remaining[num_val:num_val + num_test]] = True
+
+    return (train_mask,val_mask,test_mask)

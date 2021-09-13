@@ -29,12 +29,13 @@ from copy import copy, deepcopy
 import random
 
 class TransferMessage():
+    """用来在整个py文件中传递变量"""
     def __init__(self) -> None:
         self.f1_average='macro'
 
 tm=TransferMessage()
 
-def experiment(model_init_param:dict,
+def experiment(model_init_param:dict,*,
                 pta_loss_decay:float=0.05,
                 pta_weight_decay:float=0.005,
                 task:str='node_prediction',
@@ -76,14 +77,28 @@ def experiment(model_init_param:dict,
                 f1_average:str='macro'):
     """
     入参：
+    必写：
+    model_init_param：传入
+
+    可选：
+    任务类型：
     task: node-prediction / link-prediction / graph-classficiation
         TODO：像CogDL的SUPPORTED_DATASETS和SUPPORTED_DATASETS一样
         其实只能实现node classification……
+    
+    导入数据集：
+    隐式调用RD2PD类导入数据集（具体可参考integration_experiment/rgb_experiment/rd2pd.py介绍）：
     dataset_name: github / cora etc.
-    dataset_root
-    dataset_split_mode: public / full / random / ratio 
-    dataset_split_ratio:（dataset_split_mode='ratio'）不严格要求加起来是10，三个这种形式的数字就行
-    dataset_split_seed:（dataset_split_mode='ratio'）
+    dataset_root: /data/wanghuijuan/dataset2/rd2pd_ds etc.
+        要求该目录下放置名为dataset_name的文件夹，该文件夹中放置x.npy等原始数据文件
+    dataset_split_mode: 
+        ratio / classification
+            dataset_split_ratio: 不严格要求加起来是10
+            dataset_split_seed
+        random
+            dataset_split_seed
+    显式调用数据集
+    
     cuda_index
     train_mode: 
         fixed_args就跑已设置好的一系列参数
