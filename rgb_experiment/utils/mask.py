@@ -33,7 +33,7 @@ def check_train_containing(train_mask,y):
 
 
 
-def get_classification_mask(y,total_node_num,ratio:str,seed:int=1234567):
+def get_classification_mask(y,ratio:str,seed:int=1234567):
     """
     对每一类节点，将其对应的节点按比例进行数据集划分，总的mask求与
     返回可以直接赋值到整个data上的mask元组
@@ -41,8 +41,8 @@ def get_classification_mask(y,total_node_num,ratio:str,seed:int=1234567):
     入参：
     y=data.y
     total_node_num=data.num_nodes
-    TODO: 那个total_node_num可以用len(y)替代，但是我用过这个函数的位置太多了，以后再慢慢改吧
     """
+    total_node_num=len(y)
     train_mask=torch.zeros(total_node_num,dtype=torch.bool)
     val_mask=torch.zeros(total_node_num,dtype=torch.bool)
     test_mask=torch.zeros(total_node_num,dtype=torch.bool)

@@ -11,7 +11,7 @@ model_name='MLP'
 dataset_name='cora'
 
 acc_dict=experiment(model_init_param=model_init_param,dataset_name=dataset_name,
-                    dataset_split_mode='ratio',check_data_valid=False)
+                    dataset_split_mode='classification',check_data_valid=False)
 print(acc_dict['ACC'])  #输出accuracy值
 
 #输出结果示例：0.7097966728280961（可能每次运行得到的结果都不同）

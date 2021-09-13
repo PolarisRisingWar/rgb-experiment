@@ -9,7 +9,7 @@ from .visualize_feature import visualize_feature
 from .initial_params import InitialParameters
 from .rd2pd import RD2PD
 from .models import MLP,GCN,GraphSAGE,GAT,GGNN,APPNPStack,GraphSAGE2,PTA,DAGNN
-from .utils import get_whole_mask,get_classification_mask
+from .utils import get_whole_mask
 
 import torch
 import torch.nn as nn

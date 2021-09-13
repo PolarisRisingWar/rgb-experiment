@@ -4,7 +4,8 @@ sys.path.extend(['whj_code2/integration_experiment'])
 from rgb_experiment import RD2PD
 from rgb_experiment import experiment
 
-z=RD2PD('Github','/data/wanghuijuan/dataset2/rd2pd_ds',split_seed=123456789,split_method='classification')
+z=RD2PD('Github','/data/wanghuijuan/dataset2/rd2pd_ds',split_seed=123456789,
+        split_method='classification',apply_sample=True)
 print(z.data)
 print(z.data.y.unique())
 
