@@ -1,6 +1,8 @@
 #通过PyG.datasets直接获得Data格式数据（也可以通过其他方式获取数据）
 
 import sys
+
+import torch
 sys.path.extend(['whj_code2/integration_experiment'])
 from rgb_experiment import experiment
 
@@ -11,6 +13,13 @@ ds_path='/data/wanghuijuan/dataset1/pyg_ds'
 dataset=WebKB(ds_path,"Cornell")
 print(dataset)
 data=dataset.data
+#data.train_mask=data.train_mask[:,0]
+#data.val_mask=data.val_mask[:,0]
+#data.test_mask=data.test_mask[:,0]
+print(data.train_mask.size()==torch.Size([data.num_nodes]))
+print(len(data.train_mask.size()))
+print(data.train_mask.size()[0])
+#del data.train_mask
 print(data)
 #注意该数据的 train_mask / val_mask / test_mask 格式不符合要求
 #因此后文在 experiment() 函数中传入remake_data_mask=True这一参数来重置mask
@@ -18,7 +27,8 @@ print(data)
 model_init_param={'num_layers': 3, 'hidden_unit': 64, 'dropout_rate': 0.5}
 
 acc_dict=experiment(model_init_param=model_init_param,
-                    specify_data=True,data=data,remake_data_mask=True)
+                    specify_data=True,data=data,remake_data_mask=False,
+                    dataset_split_mode='classification')
 print(acc_dict['ACC'])  #输出accuracy值
 
 #示例输出：

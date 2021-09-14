@@ -1,6 +1,8 @@
 import torch
 from torch.functional import Tensor
 
+
+
 def node_induced_subgraph(total_num_nodes,nodes_set,original_edge_index,reorder_nodes=True):
     #参考https://pytorch-geometric.readthedocs.io/en/latest/_modules/torch_geometric/utils/subgraph.html#subgraph
     """
@@ -12,6 +14,7 @@ def node_induced_subgraph(total_num_nodes,nodes_set,original_edge_index,reorder_
 
     返回值：node-induced subgraph的edge_index
     """
+    #TODO：nodes_set去重
     if isinstance(nodes_set,list):  #子图节点索引构成的list
         new_graph_num_node=len(nodes_set)
     elif isinstance(nodes_set,Tensor) and nodes_set.dtype==torch.bool:  #mask
@@ -27,3 +30,12 @@ def node_induced_subgraph(total_num_nodes,nodes_set,original_edge_index,reorder_
         n_idx[nodes_set] = torch.arange(new_graph_num_node)
         edge_index = n_idx[edge_index]
     return edge_index
+
+
+
+#TODO
+def edge_induced_subgraph(edges_set,original_edge_index,original_x,original_y):
+    """
+    入参：
+    edges_set: original_edge_index对应的边索引（list"""
+    pass

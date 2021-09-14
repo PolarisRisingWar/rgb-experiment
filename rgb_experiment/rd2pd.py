@@ -5,7 +5,6 @@
 import numpy as np
 
 import torch
-from torch.functional import Tensor
 
 from torch_geometric.data import Data
 from torch_geometric.utils import remove_self_loops

@@ -9,7 +9,7 @@ from .visualize_feature import visualize_feature
 from .initial_params import InitialParameters
 from .rd2pd import RD2PD
 from .models import MLP,GCN,GraphSAGE,GAT,GGNN,APPNPStack,GraphSAGE2,PTA,DAGNN
-from .utils import get_whole_mask
+from .utils import get_whole_mask,get_classification_mask,get_random_mask
 
 import torch
 import torch.nn as nn
@@ -78,15 +78,16 @@ def experiment(model_init_param:dict,*,
     """
     入参：
     必写：
-    model_init_param：传入
+    model_init_param：传入模型__init__()的必要超参
 
     可选：
     任务类型：
-    task: node-prediction / link-prediction / graph-classficiation
+    task: node-prediction / link-prediction / graph-classficiation etc.
         TODO：像CogDL的SUPPORTED_DATASETS和SUPPORTED_DATASETS一样
         其实只能实现node classification……
     
-    导入数据集：
+    数据集：
+    数据集导入：
     隐式调用RD2PD类导入数据集（具体可参考integration_experiment/rgb_experiment/rd2pd.py介绍）：
     dataset_name: github / cora etc.
     dataset_root: /data/wanghuijuan/dataset2/rd2pd_ds etc.
@@ -97,7 +98,11 @@ def experiment(model_init_param:dict,*,
             dataset_split_seed
         random
             dataset_split_seed
-    显式调用数据集
+    显式调用torch_geometric.data.Data的数据集：
+    specify_data: 置True时使用 data 超参导入的Data数据
+        如果经检测发现data中没有train_mask等三个mask属性或形制不符要求，或置remake_data_mask=True
+        则使用dataset_split_mode的方法进行数据集划分
+    TODO: 对random方式划分数据集的参数传入的支持
     
     cuda_index
     train_mode: 
@@ -146,25 +151,43 @@ def experiment(model_init_param:dict,*,
     下次想个办法搞个class，就能用self的属性了
     
     """
-    #print(tm.f1_average)
+    #传递参数值
     tm.f1_average=f1_average
 
+    #导入数据集
     if not specify_data:
         dataset=RD2PD(dataset_root=dataset_root,dataset_name=dataset_name,
-                split_method=dataset_split_mode,split_ratio=dataset_split_ratio,split_seed=dataset_split_seed)
+                split_method=dataset_split_mode,split_ratio=dataset_split_ratio,
+                split_seed=dataset_split_seed)
         data=dataset.data
     else:
-        data=data.clone()  #这个是为了防止影响data原数据（据我测试可以实现这一目标）
+        data=data.clone()  #这个是为了防止后续对data的处理工作影响原数据
+        assert type(data)==Data  #理论上说不是也行但是我没考虑这种情况
 
-        #TODO：检查data中的mask参数，如果没有的话手动添加；如果形制不符（是类似PTA idx那种格式
-        #需要修改格式）；如果是其他什么奇奇怪怪的格式直接重置mask
-        
-        if remake_data_mask:  #直接重置data的mask
-            (train_mask,val_mask,test_mask)=get_whole_mask(data.y,dataset_split_ratio,dataset_split_seed)
+        #如果mask不存在或
+        #入参remake_data_mask为True
+        #或mask虽然存在但形制不符（只接受节点索引的list或者Tensor，或者mask的Tensor
+        #list要求长度不大于node_num，Tensor要求维度为1且其长度不大于node_num）
+        #则重新配置mask
+        mask_exist=hasattr(data,'train_mask') and hasattr(data,'val_mask') and hasattr(data,'test_mask')
+        if mask_exist:
+            node_num=data.num_nodes
+            islist=isinstance(data.train_mask,list) and isinstance(data.val_mask,list) and isinstance(data.test_mask,list)
+            valid_list=islist and len(data.train_mask)<=node_num and len(data.val_mask)<=node_num and len(data.test_mask)<=node_num
+            istensor=isinstance(data.train_mask,Tensor) and isinstance(data.val_mask,Tensor) and isinstance(data.test_mask,Tensor)
+            valid_tensor=istensor and len(data.train_mask.size())==1 and data.train_mask.size()[0]<=node_num and len(data.val_mask.size())==1 and data.val_mask.size()[0]<=node_num and len(data.test_mask.size())==1 and data.test_mask.size()[0]<=node_num
+        if remake_data_mask or (not mask_exist) or (not valid_list) or (not valid_tensor):  #直接重置data的mask
+            print('重新进行数据集划分，配置mask属性ing...')
+            if dataset_split_mode=='ratio':
+                (train_mask,val_mask,test_mask)=get_whole_mask(data.y,dataset_split_ratio,dataset_split_seed)
+            elif dataset_split_mode=='classification':
+                (train_mask,val_mask,test_mask)=get_classification_mask(data.y,dataset_split_ratio,dataset_split_seed)
+            elif dataset_split_mode=='random':
+                #(train_mask,val_mask,test_mask)=get_random_mask(data.y,num_train_per_class,num_val,num_test,dataset_split_seed)
+                pass
             data.train_mask=train_mask
             data.val_mask=val_mask
             data.test_mask=test_mask
-        #TODO:支持其他划分数据集的方式
         
     if to_undirected_graph:
         #print(data.edge_index)
