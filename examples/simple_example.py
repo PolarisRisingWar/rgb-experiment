@@ -7,11 +7,11 @@ from rgb_experiment import experiment
 
 #experiment函数可以自动通过zjutoid类传参，不需要显示调用zjutoid类
 model_init_param={'num_layers': 3, 'hidden_unit': 64, 'dropout_rate': 0.5}
-model_name='MLP'
+model_name='mlp'
 dataset_name='cora'
 
 acc_dict=experiment(model_init_param=model_init_param,dataset_name=dataset_name,
-                    dataset_split_mode='random',check_data_valid=False)
+                    dataset_split_mode='ratio',model_name=model_name,check_data_valid=False)
 print(acc_dict['ACC'])  #输出accuracy值
 
 #输出结果示例：0.7097966728280961（可能每次运行得到的结果都不同）

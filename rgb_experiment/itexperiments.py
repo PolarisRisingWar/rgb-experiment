@@ -31,7 +31,9 @@ import random
 class TransferMessage():
     """用来在整个py文件中传递变量"""
     def __init__(self) -> None:
+        self.need_all_metrics=False
         self.f1_average='macro'
+        self.data_device='cpu'
 
 tm=TransferMessage()
 
@@ -47,7 +49,6 @@ def experiment(model_init_param:dict,*,
                 cuda_index:int=0,
                 use_cpu:bool=False,
                 model_name:str='MLP',
-                model_forward_param:dict=None,
                 learning_rate:float=0.1,
                 epoch:int=50,
                 early_stopping:int=10,
@@ -75,7 +76,8 @@ def experiment(model_init_param:dict,*,
                 f1_average:str='macro',
                 num_train_per_class:int=20,
                 num_val:int=500,
-                num_test:int=1000,):
+                num_test:int=1000,
+                loss_func_hp:dict=None):
     """
     入参：
     必写：
@@ -106,36 +108,41 @@ def experiment(model_init_param:dict,*,
     specify_data: 置True时使用 data 超参导入的Data数据
         如果经检测发现data中没有train_mask等三个mask属性或形制不符要求，或置remake_data_mask=True
         则使用dataset_split_mode的方法进行数据集划分
+    数据集预处理：
+    to_undirected_graph:如果置True，就将data转为无向图
+        （因为to_undirected不影响无向图，所以不用区分原图是不是无向图）
+    normalize_feature: None 'row' 'col' 'all'
+    normalize_feature_method: None 'MinMaxScalar' 'StandardScalar'
+
     
     训练：
     训练设备：
     cuda_index：使用GPU时cuda的编号（int或str格式都可以）
     use_cpu: 如置True则使用CPU而非GPU
-    损失函数默认使用模型的loss_function函数，如无则使用nn.NLLLoss()（默认值）
-    model_name
-    model_init_param:model.__init__()中传入的参数
-        TODO：默认值咋整？可以通过配置文件输入一套固定的参数？或者模型本来就内置一套固定的默认参数？
-        TODO:让我想想这块怎么写比较靠谱。以及参考一下CogDL的实现
-    model_forward_param:model.forward()中额外传入的参数（感觉应该不需要，但是先把位置留出来）
-    implement_early_stopping：是否应用早停机制
-    post_cs:要不要在已有的predictor基础上加correct and smooth
-        TODO:感觉把它放在这里怪怪的！！！
-            但是我一时之间也不知道不放这里还能放哪里！！！
-    cs_param:c&s的参数
-    TODO：correct和smooth这两个环节是可拆分的，让我想想怎么拆
-    to_undirected_graph:如果置True，就将data转为无向图
-        （因为to_undirected不影响无向图，所以不用区分原图是不是无向图）
-    specify_data, data:Data=None, remake_data_mask:直接输入一个PyG的Data格式的data
-        具体的直接看下面代码即可
+    模型：
+    model_name: 模型名称（大小写不限）
+    model_init_param:model.__init__()中传入的超参
+    post_cs:要不要在已有的predictor基础上加C&S (correct and smooth)模型
+    cs_param: C&S的参数
+    TODO: 在post-ps中放置C&S模型，以及拆分correct和smooth两个函数
+    训练过程：
+    TODO: 损失函数：
+    默认使用模型的loss_function函数，如无则使用nn.NLLLoss()（默认值）
+        loss_function函数中的超参通过loss_func_hp入参传入
+    早停：
+        implement_early_stopping: 如置True则应用早停功能
+        early_stopping: 早停超过标准这么多epoch后就停止训练
+        early_stopping_criterion: 早停标准
+    
+    训练完成模型后的打印输出工作：
     print_pics：是否要打印loss、accs等的图像
     print_confusion_matrix：是否要打印混淆矩阵
     check_data_valid：是否要检验data的mask三种数据集的数量，以及各自之间没有交集的情况
     vis_feat：是否要将节点特征可视化（可视化节点初始特征，和经卷积后的节点嵌入）
         feat_pic_names_prefix节点特征可视化输出图的名称（前缀，后面加123等）
     need_all_metrics: 如果置False，则只计算ACC的值，其他指标都置0
-    early_stopping_criterion: acc / loss
-    normalize_feature: None 'row' 'col' 'all'
-    normalize_feature_method: None 'MinMaxScalar' 'StandardScalar'
+    
+    
 
     返回值：
     {'ACC':accuracy,'precision_score':precision_score,'recall_score':recall_score,
@@ -143,10 +150,8 @@ def experiment(model_init_param:dict,*,
     TODO:以及调optimizer的超参
     
     TODO：……调一下参数顺序
-    TODO:这么多参数是为了先写出来。等后期可以考虑使用**kwargs这种代指
     TODO:提高容错
     TODO:继续解耦
-    TODO：交叉多种数据集划分方式以提升结果鲁棒性，这个过程我现在还是放外面的，得想想要不要放里面
     TODO:我想了一下，感觉像device和need_all_metrics这种参数比较适合作为全局变量
     下次想个办法搞个class，就能用self的属性了
     
@@ -170,21 +175,32 @@ def experiment(model_init_param:dict,*,
         #或mask虽然存在但形制不符（只接受节点索引的list或者Tensor，或者mask的Tensor
         #list要求长度不大于node_num，Tensor要求维度为1且其长度不大于node_num）
         #则重新配置mask
-        mask_exist=hasattr(data,'train_mask') and hasattr(data,'val_mask') and hasattr(data,'test_mask')
+        mask_exist=hasattr(data,'train_mask') and hasattr(data,'val_mask') \
+                    and hasattr(data,'test_mask')
         if mask_exist:
             node_num=data.num_nodes
-            islist=isinstance(data.train_mask,list) and isinstance(data.val_mask,list) and isinstance(data.test_mask,list)
-            valid_list=islist and len(data.train_mask)<=node_num and len(data.val_mask)<=node_num and len(data.test_mask)<=node_num
-            istensor=isinstance(data.train_mask,Tensor) and isinstance(data.val_mask,Tensor) and isinstance(data.test_mask,Tensor)
-            valid_tensor=istensor and len(data.train_mask.size())==1 and data.train_mask.size()[0]<=node_num and len(data.val_mask.size())==1 and data.val_mask.size()[0]<=node_num and len(data.test_mask.size())==1 and data.test_mask.size()[0]<=node_num
-        if remake_data_mask or (not mask_exist) or (not valid_list) or (not valid_tensor):  #直接重置data的mask
+            islist=isinstance(data.train_mask,list) and isinstance(data.val_mask,list) and \
+                    isinstance(data.test_mask,list)
+            valid_list=islist and len(data.train_mask)<=node_num and \
+                len(data.val_mask)<=node_num and len(data.test_mask)<=node_num
+            istensor=isinstance(data.train_mask,Tensor) and isinstance(data.val_mask,Tensor) \
+                    and isinstance(data.test_mask,Tensor)
+            valid_tensor=istensor and len(data.train_mask.size())==1 and \
+                        data.train_mask.size()[0]<=node_num and len(data.val_mask.size())==1 \
+                        and data.val_mask.size()[0]<=node_num and \
+                        len(data.test_mask.size())==1 and data.test_mask.size()[0]<=node_num
+        if remake_data_mask or (not mask_exist) or (not valid_list) or (not valid_tensor):
+            #直接重置data的mask
             print('重新进行数据集划分，配置mask属性ing...')
             if dataset_split_mode=='ratio':
-                (train_mask,val_mask,test_mask)=get_whole_mask(data.y,dataset_split_ratio,dataset_split_seed)
+                (train_mask,val_mask,test_mask)=get_whole_mask(data.y,dataset_split_ratio,
+                                                dataset_split_seed)
             elif dataset_split_mode=='classification':
-                (train_mask,val_mask,test_mask)=get_classification_mask(data.y,dataset_split_ratio,dataset_split_seed)
+                (train_mask,val_mask,test_mask)=get_classification_mask(data.y,
+                                                dataset_split_ratio,dataset_split_seed)
             elif dataset_split_mode=='random':
-                (train_mask,val_mask,test_mask)=get_random_mask(data.y,num_train_per_class,num_val,num_test,dataset_split_seed)
+                (train_mask,val_mask,test_mask)=get_random_mask(data.y,num_train_per_class,
+                                                num_val,num_test,dataset_split_seed)
             data.train_mask=train_mask
             data.val_mask=val_mask
             data.test_mask=test_mask
@@ -294,9 +310,12 @@ def experiment(model_init_param:dict,*,
 
         labels=data.y
 
-        y_soft_train = label_propagation(adj, labels, idx_train, model_init_param['K'], model_init_param['alpha'],device)
-        y_soft_val = label_propagation(adj, labels, idx_val, model_init_param['K'], model_init_param['alpha'],device)
-        y_soft_test = label_propagation(adj, labels, idx_test, model_init_param['K'], model_init_param['alpha'],device)
+        y_soft_train = label_propagation(adj, labels, idx_train, model_init_param['K'], 
+                        model_init_param['alpha'],device)
+        y_soft_val = label_propagation(adj, labels, idx_val, model_init_param['K'], 
+                        model_init_param['alpha'],device)
+        y_soft_test = label_propagation(adj, labels, idx_test, model_init_param['K'], 
+                        model_init_param['alpha'],device)
 
         model=PTA(nfeat=input_dim,nclass=output_dim,**model_init_param)
 
@@ -306,6 +325,10 @@ def experiment(model_init_param:dict,*,
     optimizer=torch.optim.Adam(model.parameters(),lr=learning_rate)
     #TODO:optimizer也作为可选超参
 
+    if hasattr(model,'loss_function'):
+        print('model含有loss_function函数！')
+    else:
+        print('model中不含loss_function函数')
     criterion=nn.NLLLoss()
     y=data.y
     train_mask=data.train_mask
@@ -329,11 +352,13 @@ def experiment(model_init_param:dict,*,
         
         if model_name=='pta':
             output = model(features)
-            loss = pta_loss_decay * model.loss_function(y_hat = output, y_soft = y_soft_train, epoch = i) + pta_weight_decay * torch.sum(model.Linear1.weight ** 2) / 2
+            loss = pta_loss_decay * model.loss_function(y_hat = output, y_soft = y_soft_train, 
+                    epoch = i) + pta_weight_decay * torch.sum(model.Linear1.weight ** 2) / 2
         else:
             out=model(**model_forward_param)['out']
             loss=criterion(out[train_mask],y[train_mask])
-            train_accs.append(compare_pred_label(out[train_mask].max(dim=1)[1],y[train_mask],need_all_metrics)['ACC'])
+            train_accs.append(compare_pred_label(out[train_mask].max(dim=1)[1],y[train_mask],
+                            need_all_metrics)['ACC'])
 
         train_losses.append(loss.item())
         
@@ -342,7 +367,8 @@ def experiment(model_init_param:dict,*,
 
         if model_name=='pta':
             output = model.inference(output, adj)
-            train_accs.append(compare_pred_label(output[idx_train].max(dim=1)[1],y[idx_train],need_all_metrics)['ACC'])
+            train_accs.append(compare_pred_label(output[idx_train].max(dim=1)[1],y[idx_train],
+                            need_all_metrics)['ACC'])
 
             model.eval()
             output = model(features)
@@ -350,12 +376,15 @@ def experiment(model_init_param:dict,*,
             val_loss = pta_loss_decay * model.loss_function(y_hat = output, y_soft = y_soft_val)
             val_losses.append(val_loss.item())
             output = model.inference(output, adj)
-            val_acc=compare_pred_label(output[idx_val].max(dim=1)[1],y[idx_val],need_all_metrics)['ACC']
+            val_acc=compare_pred_label(output[idx_val].max(dim=1)[1],y[idx_val],
+                                        need_all_metrics)['ACC']
             val_accs.append(val_acc)
 
-            loss_test = pta_loss_decay * model.loss_function(y_hat = output, y_soft = y_soft_test)
+            loss_test = pta_loss_decay * model.loss_function(y_hat = output, 
+                                                            y_soft = y_soft_test)
             test_losses.append(loss_test.item())
-            metric_result=compare_pred_label(output[idx_test].max(dim=1)[1],y[idx_test],need_all_metrics)
+            metric_result=compare_pred_label(output[idx_test].max(dim=1)[1],y[idx_test],
+                                            need_all_metrics)
             test_accs.append(metric_result['ACC'])
         else:
             val_dict=test(model,model_forward_param,y,val_mask,need_all_metrics)
@@ -468,9 +497,12 @@ def experiment(model_init_param:dict,*,
         print('训练集共'+str(data.train_mask.sum().item())+'个数据')
         print('验证集共'+str(data.val_mask.sum().item())+'个数据')
         print('测试集共'+str(data.test_mask.sum().item())+'个数据')
-        print('训练集与验证集上有重复的数据共'+str(sum(data.train_mask & data.val_mask).item())+'个')
-        print('训练集与测试集上有重复的数据共'+str(sum(data.train_mask & data.test_mask).item())+'个')
-        print('验证集与测试集上有重复的数据共'+str(sum(data.val_mask & data.test_mask).item())+'个')
+        print('训练集与验证集上有重复的数据共'+str(sum(data.train_mask & data.val_mask).item())+ \
+            '个')
+        print('训练集与测试集上有重复的数据共'+str(sum(data.train_mask & data.test_mask).item()) \
+            +'个')
+        print('验证集与测试集上有重复的数据共'+str(sum(data.val_mask & data.test_mask).item())+ \
+            '个')
     
     if vis_feat:
         assert not model_name=='pta'
@@ -486,7 +518,8 @@ def experiment(model_init_param:dict,*,
         #输出全部数据在best_model上的嵌入向量
         visualize_feature(metric_result['emb'],data.y,pics_root,
                         feat_pic_names_prefix+'_embedding.png',
-                        dataset_name+'数据集在'+model_name+'模型上运行后的特征（ACC为'+str(round(metric_result['ACC'],3))+'）')
+                        dataset_name+'数据集在'+model_name+ \
+                        '模型上运行后的特征（ACC为'+str(round(metric_result['ACC'],3))+'）')
 
     return {'ACC':metric_result['ACC'],'precision_score':metric_result['precision_score'],
     'recall_score':metric_result['recall_score'],'f1_score':metric_result['f1_score']}
