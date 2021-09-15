@@ -46,8 +46,6 @@ def experiment(model_init_param:dict,*,
                 dataset_split_seed:int=123456789,
                 cuda_index:int=0,
                 use_cpu:bool=False,
-                train_mode:str='fixed_args',
-                criterion:type=nn.NLLLoss,
                 model_name:str='MLP',
                 model_forward_param:dict=None,
                 learning_rate:float=0.1,
@@ -74,7 +72,10 @@ def experiment(model_init_param:dict,*,
                 ini_seed:int=1234567,
                 need_to_reappear:bool=False,
                 need_all_metrics:bool=True,
-                f1_average:str='macro'):
+                f1_average:str='macro',
+                num_train_per_class:int=20,
+                num_val:int=500,
+                num_test:int=1000,):
     """
     入参：
     必写：
@@ -94,24 +95,23 @@ def experiment(model_init_param:dict,*,
         要求该目录下放置名为dataset_name的文件夹，该文件夹中放置x.npy等原始数据文件
     dataset_split_mode: 
         ratio / classification
-            dataset_split_ratio: 不严格要求加起来是10
-            dataset_split_seed
+            dataset_split_ratio: 数据集划分比例。不严格要求加起来是10
+            dataset_split_seed：数据集划分随机种子
         random
-            dataset_split_seed
+            dataset_split_seed：数据集划分随机种子
+            num_train_per_class：每一类选这么多节点作为训练集
+            num_val：验证集节点数
+            num_test：测试集节点数
     显式调用torch_geometric.data.Data的数据集：
     specify_data: 置True时使用 data 超参导入的Data数据
         如果经检测发现data中没有train_mask等三个mask属性或形制不符要求，或置remake_data_mask=True
         则使用dataset_split_mode的方法进行数据集划分
-    TODO: 对random方式划分数据集的参数传入的支持
     
-    cuda_index
-    train_mode: 
-        fixed_args就跑已设置好的一系列参数
-        auto_ml就调用隔壁auto_tune_hp.py来自动调参这样？我再想想
-    criterion:损失函数所用的模型（这个感觉要看编码风格，看喜欢在Module里面定义loss还是在外面定义loss）
-        PyTorch60分钟速成教程是在外面的，我当年学PyTorch第一套教程就是那个，
-        对我PyTorch代码编写的影响力度，就像初恋之对恋爱观的影响力度一样。所以我就写外面了。
-        TODO：呀咩咯！配置文件不会要专门写个type格式吧！
+    训练：
+    训练设备：
+    cuda_index：使用GPU时cuda的编号（int或str格式都可以）
+    use_cpu: 如置True则使用CPU而非GPU
+    损失函数默认使用模型的loss_function函数，如无则使用nn.NLLLoss()（默认值）
     model_name
     model_init_param:model.__init__()中传入的参数
         TODO：默认值咋整？可以通过配置文件输入一套固定的参数？或者模型本来就内置一套固定的默认参数？
@@ -158,7 +158,8 @@ def experiment(model_init_param:dict,*,
     if not specify_data:
         dataset=RD2PD(dataset_root=dataset_root,dataset_name=dataset_name,
                 split_method=dataset_split_mode,split_ratio=dataset_split_ratio,
-                split_seed=dataset_split_seed)
+                split_seed=dataset_split_seed,num_train_per_class=num_train_per_class,
+                num_val=num_val,num_test=num_test)
         data=dataset.data
     else:
         data=data.clone()  #这个是为了防止后续对data的处理工作影响原数据
@@ -183,8 +184,7 @@ def experiment(model_init_param:dict,*,
             elif dataset_split_mode=='classification':
                 (train_mask,val_mask,test_mask)=get_classification_mask(data.y,dataset_split_ratio,dataset_split_seed)
             elif dataset_split_mode=='random':
-                #(train_mask,val_mask,test_mask)=get_random_mask(data.y,num_train_per_class,num_val,num_test,dataset_split_seed)
-                pass
+                (train_mask,val_mask,test_mask)=get_random_mask(data.y,num_train_per_class,num_val,num_test,dataset_split_seed)
             data.train_mask=train_mask
             data.val_mask=val_mask
             data.test_mask=test_mask
@@ -306,7 +306,7 @@ def experiment(model_init_param:dict,*,
     optimizer=torch.optim.Adam(model.parameters(),lr=learning_rate)
     #TODO:optimizer也作为可选超参
 
-    criterion=criterion()
+    criterion=nn.NLLLoss()
     y=data.y
     train_mask=data.train_mask
     val_mask=data.val_mask
