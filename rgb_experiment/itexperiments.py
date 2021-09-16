@@ -38,16 +38,20 @@ class TransferMessage():
 tm=TransferMessage()
 
 def experiment(model_init_param:dict,*,
-                pta_loss_decay:float=0.05,
-                pta_weight_decay:float=0.005,
                 task:str='node_prediction',
                 dataset_name:str='Github',
                 dataset_root:str=InitialParameters.default_data_path,
                 dataset_split_mode:str='ratio',
                 dataset_split_ratio:str='6-2-2',
+                num_train_per_class:int=20,num_val:int=500,num_test:int=1000,
                 dataset_split_seed:int=123456789,
-                cuda_index:int=0,
-                use_cpu:bool=False,
+                specify_data:bool=False,data:Data=None,remake_data_mask:bool=False,
+                to_undirected_graph:bool=False,
+                normalize_feature:str=None,normalize_feature_method:str=None,
+                pta_loss_decay:float=0.05,
+                pta_weight_decay:float=0.005,
+                cuda_index:int=0,use_cpu:bool=False,
+                need_to_reappear:bool=False,reappear_seed:int=14530529,
                 model_name:str='MLP',
                 learning_rate:float=0.1,
                 epoch:int=50,
@@ -56,10 +60,6 @@ def experiment(model_init_param:dict,*,
                 implement_early_stopping:bool=True,
                 post_cs:bool=False,
                 cs_param:dict=None,
-                to_undirected_graph:bool=False,
-                specify_data:bool=False,
-                data:Data=None,
-                remake_data_mask:bool=False,
                 print_pics:bool=False,
                 pics_root:str=InitialParameters.default_pics_path,
                 pics_name:str='pic1.png',
@@ -67,16 +67,10 @@ def experiment(model_init_param:dict,*,
                 check_data_valid:bool=False,
                 vis_feat:bool=False,
                 feat_pic_names_prefix:str=None,
-                normalize_feature:str=None,
-                normalize_feature_method:str=None,
                 total_seed:int=12345678,
                 ini_seed:int=1234567,
-                need_to_reappear:bool=False,
                 need_all_metrics:bool=True,
                 f1_average:str='macro',
-                num_train_per_class:int=20,
-                num_val:int=500,
-                num_test:int=1000,
                 loss_func_hp:dict=None):
     """
     入参：
@@ -100,28 +94,37 @@ def experiment(model_init_param:dict,*,
             dataset_split_ratio: 数据集划分比例。不严格要求加起来是10
             dataset_split_seed：数据集划分随机种子
         random
-            dataset_split_seed：数据集划分随机种子
             num_train_per_class：每一类选这么多节点作为训练集
             num_val：验证集节点数
             num_test：测试集节点数
+            dataset_split_seed：数据集划分随机种子
     显式调用torch_geometric.data.Data的数据集：
     specify_data: 置True时使用 data 超参导入的Data数据
         如果经检测发现data中没有train_mask等三个mask属性或形制不符要求，或置remake_data_mask=True
         则使用dataset_split_mode的方法进行数据集划分
+
     数据集预处理：
     to_undirected_graph:如果置True，就将data转为无向图
-        （因为to_undirected不影响无向图，所以不用区分原图是不是无向图）
+        （因为PyG的to_undirected函数不影响无向图，所以不用区分原图是不是无向图）
     normalize_feature: None 'row' 'col' 'all'
     normalize_feature_method: None 'MinMaxScalar' 'StandardScalar'
 
-    
     训练：
     训练设备：
     cuda_index：使用GPU时cuda的编号（int或str格式都可以）
     use_cpu: 如置True则使用CPU而非GPU
+    训练可复现性设置：
+    need_to_reappear: 如置True则设置随机种子reappear_seed使模型具有相比不设置更高的可复现性
     模型：
     model_name: 模型名称（大小写不限）
     model_init_param:model.__init__()中传入的超参
+    训练过程：
+    pre-processing:
+    TODO：检测模型有没有内置的post_ps函数
+    training:
+    post-processing:
+    TODO：把PTA和C&S的都整合到这个里面来（就都用PTA的格式，但像C&S一样简洁。最好能像
+        训练的模型一样整合到一起）
     post_cs:要不要在已有的predictor基础上加C&S (correct and smooth)模型
     cs_param: C&S的参数
     TODO: 在post-ps中放置C&S模型，以及拆分correct和smooth两个函数
@@ -156,8 +159,15 @@ def experiment(model_init_param:dict,*,
     下次想个办法搞个class，就能用self的属性了
     
     """
+    print('正在运行'+dataset_name+'数据集在'+model_name+'上的节点分类任务模型...')
+
+
+
     #传递参数值
+    tm.need_all_metrics=need_all_metrics
     tm.f1_average=f1_average
+
+
 
     #导入数据集
     if not specify_data:
@@ -204,38 +214,43 @@ def experiment(model_init_param:dict,*,
             data.train_mask=train_mask
             data.val_mask=val_mask
             data.test_mask=test_mask
-        
-    if to_undirected_graph:
-        #print(data.edge_index)
-        #print(data.num_nodes)
-        data.edge_index = to_undirected(data.edge_index,num_nodes=data.num_nodes)
-
-    device=torch.device('cuda:'+str(cuda_index) if torch.cuda.is_available() else "cpu")
-    if use_cpu:
-        device='cpu'
+            print('mask配置成功！')
+    print('数据集导入成功！')
     
-    if need_to_reappear:
-        random.seed(total_seed)
-        np.random.seed(total_seed)
-        torch.manual_seed(ini_seed)
-        if torch.cuda.is_available(): 
-            torch.cuda.manual_seed(ini_seed)
 
-    input_dim=data.num_node_features
-    output_dim=data.y.max().item()+1  #不用之前的unique().size()[0]是考虑到我用-1指无标签了
-    #print(output_dim)
 
+    #数据集预处理
+    #有向图转换为无向图
+    if to_undirected_graph:
+        print('正在将图数据转换为无向图...')
+        data.edge_index = to_undirected(data.edge_index,num_nodes=data.num_nodes)
+        print('转换成功！')
+
+
+    
+    #训练
+    #训练设备
+    device=torch.device('cuda:'+str(cuda_index) if (torch.cuda.is_available() and not use_cpu) \
+                        else "cpu")
+    
+
+
+    #传递参数值
+    tm.data_device=device
+
+
+    
+    #数据集预处理
+    #特征归一化
     data=data.to(device)
-
-    #特征归一化部分
     features=data.x
        
     if normalize_feature in ['row','col','all']:
-        #print(features)
         norm_feat_dim_map={'row':1,'col':0,'all':[0,1]}
         norm_feat_dim=norm_feat_dim_map[normalize_feature]
-
+        print('正在进行特征在'+normalize_feature+'维度上的'+normalize_feature+'归一化...')
         if normalize_feature_method=='MinMaxScalar':
+            
             if isinstance(norm_feat_dim,int):
                 feat_min=torch.min(features,norm_feat_dim)[0]
                 feat_max=torch.max(features,norm_feat_dim)[0]
@@ -251,7 +266,6 @@ def experiment(model_init_param:dict,*,
                 features=features.T
             else:
                 features=(features-feat_min)/denominator
-            #print(features)
             
         elif normalize_feature_method=='StandardScalar':
             feat_mean=torch.mean(features,norm_feat_dim)
@@ -262,12 +276,37 @@ def experiment(model_init_param:dict,*,
                 features=features.T
             else:
                 features=(features-feat_mean)/denominator
-            #print(features)
 
         else:
             #以下代码参考了：https://pytorch-geometric.readthedocs.io/en/latest/_modules/torch_geometric/transforms/normalize_features.html
             features=features/features.sum(norm_feat_dim, keepdim=True).clamp(min=1)
             #顺便给出PyTorch的实现以供参考：https://pytorch.org/docs/stable/generated/torch.nn.functional.normalize.html#torch.nn.functional.normalize
+        print('完成归一化工作！')
+
+
+
+    #训练
+    #模型可复现性
+    if need_to_reappear:
+        random.seed(reappear_seed)
+        np.random.seed(reappear_seed)
+        torch.manual_seed(reappear_seed)
+        if torch.cuda.is_available(): 
+            torch.cuda.manual_seed(reappear_seed)
+
+
+
+    #模型
+    input_dim=data.num_node_features
+    output_dim=data.y.max().item()+1  #不用之前的unique().size()[0]是考虑到我用-1指无标签了
+
+    
+
+    #pre-processing
+
+    #training
+
+    #post-processing
 
     model_name=model_name.lower()
     if model_name=='mlp':

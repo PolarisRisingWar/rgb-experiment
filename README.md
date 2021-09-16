@@ -37,6 +37,9 @@ edge_index.npy（边，`np.save()` 结果，要求元素数据格式为float。�
 2. 一般来说，您的模型需要返回一个字典，其中键x的value是输出值，键emb的value建议是输出层前一层的节点嵌入值。
 3. 如果您对模型有特殊需求，可以参考PTA模型和C&S模型的情况，来定制化地完成一些工作。
 4. 请注意：本实验中模型名称在 `experiment()` 调用中是不区分字母大小写的（见 `itexperiment.py`）。
+## 1.4 其他注意事项
+1. 本项目中用节点标签为-1指节点无标签。
+2. 本项目中节点的标签必须是分类标签，且为0、1、2、...(标签数-1) 的形式。
 
 # 2. package `rgb_experiment` 的简易文档
 详细内容可直接参照各文件的注释。
@@ -60,8 +63,10 @@ edge_index.npy（边，`np.save()` 结果，要求元素数据格式为float。�
     1. 数据集划分，即在 `data` 中增加 `train / val / test mask`（`y=-1` 即认为是无标签节点，不参与数据集划分）
         1. `get_whole_mask()`：对分类任务的数据，按比例对所有数据进行划分（保证训练集中含有每一类标签的节点）
         2. `get_classification_mask()`：对分类任务的数据的每一类节点，按比例对所有数据进行划分
-        3. TODO：对分类任务的数据的每一类节点选取特定数量的节点作为训练集、验证集及测试集（参考 `torch_geometric.datasets.Planetoid` 的随机数据划分方式）
-    2. TODO：通过节点序列或边序列返回对应的子图
+        3. `get_random_mask()`：对分类任务的数据的每一类节点选取特定数量的节点作为训练集、验证集及测试集（参考 `torch_geometric.datasets.Planetoid` 的随机数据划分方式）
+    2. 子图
+        1. `node_induced_subgraph()`：通过节点序列返回对应的node induced subgraph
+        2. TODO: edge induced subgraph
     3. TODO：图采样
     4. TODO：自动调参
 
