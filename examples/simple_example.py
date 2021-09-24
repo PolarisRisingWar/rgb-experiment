@@ -5,7 +5,7 @@ import sys
 sys.path.extend(['whj_code2/integration_experiment'])
 from rgb_experiment import experiment
 
-#experiment函数可以自动通过zjutoid类传参，不需要显示调用zjutoid类
+#experiment函数可以自动通过RD2PD类传参，不需要显示调用RD2PD类
 model_init_param={'num_layers': 3, 'hidden_unit': 64, 'dropout_rate': 0.5}
 model_name='mlp'
 dataset_name='cora'

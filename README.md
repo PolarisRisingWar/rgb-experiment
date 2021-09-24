@@ -4,6 +4,20 @@
 （注：我用VSCode的MPE边看边写的，别的Markdown预览方式可能不支持部分语法）
 
 # 1. quick start
+示例（各部分的详细解释见后文）：
+```python
+import sys
+sys.path.extend(['whj_code2/integration_experiment'])
+from rgb_experiment import experiment
+
+model_init_param={'num_layers': 3, 'hidden_unit': 64, 'dropout_rate': 0.5}
+model_name='mlp'
+dataset_name='cora'
+
+acc_dict=experiment(model_init_param=model_init_param,dataset_name=dataset_name,
+                    dataset_split_mode='ratio',model_name=model_name)
+print(acc_dict['ACC'])  #输出accuracy值
+```
 ## 1.1 调用函数的方式
 1. 本项目在后续开发过程中可能会上pypi，但是暂时还是一个单纯的package，需要手动引入目录后才能调用包：
 ```python
