@@ -12,7 +12,7 @@ class InitialParameters:
     dataset_names1=['cora','citeseer','pubmed','Github','Elliptic','Film','Wiki','Clothing',
                     'Electronics','Dblp','Yelpchi','Alpha','Weibo','bgp','ssn5','ssn7',
                     'chameleon','squirrel','Aids','Nba','Wisconsin','Texas','Cornell',
-                    'Pokec_z']
+                    'Pokec_z','ogbn_arxiv']
     dataset_names2=['ssn1','ssn2','ssn3','ssn5','ssn6']
     #dataset_names2是搞得不太好的图数据，一般不用
 

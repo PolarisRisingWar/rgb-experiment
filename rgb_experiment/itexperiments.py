@@ -71,7 +71,7 @@ def experiment(model_init_param:dict,*,
                 ini_seed:int=1234567,
                 need_all_metrics:bool=True,
                 f1_average:str='macro',
-                loss_func_hp:dict=None):
+                loss_func_hp:dict=None,print_print:bool=True):
     """
     入参：
     必写：
@@ -159,7 +159,8 @@ def experiment(model_init_param:dict,*,
     下次想个办法搞个class，就能用self的属性了
     
     """
-    print('正在运行'+dataset_name+'数据集在'+model_name+'上的节点分类任务模型...')
+    if print_print:
+        print('正在运行'+(dataset_name if not specify_data else '自定义')+'数据集在'+model_name+'上的节点分类任务模型...')
 
 
 
@@ -201,7 +202,8 @@ def experiment(model_init_param:dict,*,
                         len(data.test_mask.size())==1 and data.test_mask.size()[0]<=node_num
         if remake_data_mask or (not mask_exist) or (not valid_list) or (not valid_tensor):
             #直接重置data的mask
-            print('重新进行数据集划分，配置mask属性ing...')
+            if print_print:
+                print('重新进行数据集划分，配置mask属性ing...')
             if dataset_split_mode=='ratio':
                 (train_mask,val_mask,test_mask)=get_whole_mask(data.y,dataset_split_ratio,
                                                 dataset_split_seed)
@@ -214,17 +216,21 @@ def experiment(model_init_param:dict,*,
             data.train_mask=train_mask
             data.val_mask=val_mask
             data.test_mask=test_mask
-            print('mask配置成功！')
-    print('数据集导入成功！')
+            if print_print:
+                print('mask配置成功！')
+    if print_print:
+        print('数据集导入成功！')
     
 
 
     #数据集预处理
     #有向图转换为无向图
     if to_undirected_graph:
-        print('正在将图数据转换为无向图...')
+        if print_print:
+            print('正在将图数据转换为无向图...')
         data.edge_index = to_undirected(data.edge_index,num_nodes=data.num_nodes)
-        print('转换成功！')
+        if print_print:
+            print('转换成功！')
 
 
     
@@ -248,7 +254,8 @@ def experiment(model_init_param:dict,*,
     if normalize_feature in ['row','col','all']:
         norm_feat_dim_map={'row':1,'col':0,'all':[0,1]}
         norm_feat_dim=norm_feat_dim_map[normalize_feature]
-        print('正在进行特征在'+normalize_feature+'维度上的'+normalize_feature+'归一化...')
+        if print_print:
+            print('正在进行特征在'+normalize_feature+'维度上的'+normalize_feature+'归一化...')
         if normalize_feature_method=='MinMaxScalar':
             
             if isinstance(norm_feat_dim,int):
@@ -281,7 +288,8 @@ def experiment(model_init_param:dict,*,
             #以下代码参考了：https://pytorch-geometric.readthedocs.io/en/latest/_modules/torch_geometric/transforms/normalize_features.html
             features=features/features.sum(norm_feat_dim, keepdim=True).clamp(min=1)
             #顺便给出PyTorch的实现以供参考：https://pytorch.org/docs/stable/generated/torch.nn.functional.normalize.html#torch.nn.functional.normalize
-        print('完成归一化工作！')
+        if print_print:
+            print('完成归一化工作！')
 
 
 
@@ -365,9 +373,11 @@ def experiment(model_init_param:dict,*,
     #TODO:optimizer也作为可选超参
 
     if hasattr(model,'loss_function'):
-        print('model含有loss_function函数！')
+        if print_print:
+            print('model含有loss_function函数！')
     else:
-        print('model中不含loss_function函数')
+        if print_print:
+            print('model中不含loss_function函数，使用NLLLoss作为损失函数')
     criterion=nn.NLLLoss()
     y=data.y
     train_mask=data.train_mask

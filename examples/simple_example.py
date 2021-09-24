@@ -1,4 +1,4 @@
-#通过experiment内置直接通过数据集名称及路径，使用zjutoid类调用图数据
+#通过experiment内置直接通过数据集名称及路径，使用RD2PD类调用图数据
 #cora数据集在MLP模型上运行，打印准确率
 
 import sys
