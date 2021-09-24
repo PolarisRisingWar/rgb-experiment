@@ -72,7 +72,7 @@ edge_index.npy（边，`np.save()` 结果，要求元素数据格式为float。�
     7. GraphSAGE2（同GraphSAGE）（应用 `torch_geometric.nn.SAGEConv` 类作为卷积层，在较大的数据集上有OOM的问题）
     8. MLP
     9. PTA（原论文 [On the Equivalence of Decoupled Graph Convolution Network and Label Propagation](https://arxiv.org/abs/2010.12408)）
-    10. （另需注意：本项目也实现了C&S模型，但是在 `experiment()` 函数中直接进行了post-processing，就不在这一部分）
+    10. （另需注意：本项目也实现了C&S模型，但是在 `experiment()` 函数中直接进行了post-processing，就不在这一部分。对C&S模型的实现可参考 `examples/simple_cs_example.py` 文件）
 6. `submodule utils`：一些实用的函数
     1. 数据集划分，即在 `data` 中增加 `train / val / test mask`（`y=-1` 即认为是无标签节点，不参与数据集划分）
         1. `get_whole_mask()`：对分类任务的数据，按比例对所有数据进行划分（保证训练集中含有每一类标签的节点）
@@ -92,11 +92,13 @@ edge_index.npy（边，`np.save()` 结果，要求元素数据格式为float。�
 （注意2：不实时更新，需要最新版的结果建议直接联系作者）
 3. 文件夹 `examples`：示例代码
     1. `simple_example.py`：直接调用 `experiment()` 函数得到结果并打印。
+    2. `simple_cs_example.py`：C&S模型使用示例。
     2. `explictly_data_example.py`：显式传入 `torch_geometric.data.Data` 格式的图数据（通过 `torch_geometric.datasets` 模块导入）到 `experiment()` 函数中，得到结果并打印。
     3. `ini_example.py`：通过配置文件传参。
     4. `rd2pd_example.py`：通过 `RD2PD` 类导入 `torch_geometric.data.Data` 格式的图数据。
     5. `auto_tune_hp.py`：一个自动调参的函数（但是不太好用）。使用方法可参考 `try_auto_tune_hp.py`
     6. `try_auto_tune_hp.py`：见3.5介绍
+    7. `all_dataset_baseline.py`：对所有数据集在所有模型上运行并得到准确率指标结果的代码。
     7. 文件夹 `outdated_entirely_run_example`：在前几个版本的本项目结构中使用的跑所有数据集在所有模型上的指标结果的代码及相应的输出内容，由于代码结构发生变化已无法使用，但可作为参考
         1.  `run_example1`：直接用 `initial_params.py` 中内置的数据集名称和路径，调用 `experiment()` 函数运行结果
         2. `run_example2`：用外部传入的 `Data` 文件，调用 `experiment()` 函数运行结果

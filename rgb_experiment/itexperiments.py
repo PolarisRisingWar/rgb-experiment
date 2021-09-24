@@ -4,6 +4,7 @@ import numpy as np
 
 import scipy.sparse as sp
 from scipy.sparse import coo_matrix
+from torch.nn import Module
 
 from .visualize_feature import visualize_feature
 from .initial_params import InitialParameters
@@ -71,7 +72,8 @@ def experiment(model_init_param:dict,*,
                 ini_seed:int=1234567,
                 need_all_metrics:bool=True,
                 f1_average:str='macro',
-                loss_func_hp:dict=None,print_print:bool=True):
+                loss_func_hp:dict=None,print_print:bool=True,
+                specify_model:bool=True,model:Module=None):
     """
     入参：
     必写：
