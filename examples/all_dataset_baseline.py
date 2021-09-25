@@ -4,7 +4,7 @@
 to_un=False  #如果置True则跑所有数据集上原始方向，否则跑有向图转化为无向图
 dataset_split_ratio='5-2-3'
 seed_number=10
-cuda_index=0
+cuda_index=1
 learning_rate=0.01
 epoch=300
 first_sentence='所有模型，所有数据集，有向图，5-2-3, 10次平均'
@@ -41,6 +41,7 @@ file_handle.write('\n')
 for dn in range(len(dn_list)):  #遍历数据集
     d=dn_list[dn]
     file_handle.write(d)
+    #TODO:考虑通过specify_data来加快代码运行的速度
     for i in range(len(model_list)):  #遍历模型
         acc_list=[]
         try:

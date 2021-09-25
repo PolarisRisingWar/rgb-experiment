@@ -75,6 +75,7 @@ class RD2PD():
         self.data：PyG的Data格式图数据
         self.num_nodes: self.data的节点数
         属性：x, y, edge_index, train_mask, val_mask, test_mask, non_label_mask (optional)
+        TODO:缓存功能以加速下载
         """
         #TODO：检测原始文件是否在路径中存在，如不存在则调用download_data()下载原始数据
         numpy_x=np.load(dataset_root+'/'+dataset_name+'/x.npy')
