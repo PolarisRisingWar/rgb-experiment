@@ -72,6 +72,7 @@ edge_index.npy（边，`np.save()` 结果，要求元素数据格式为float。�
     7. GraphSAGE2（同GraphSAGE）（应用 `torch_geometric.nn.SAGEConv` 类作为卷积层，在较大的数据集上有OOM的问题）
     8. MLP
     9. PTA（原论文 [On the Equivalence of Decoupled Graph Convolution Network and Label Propagation](https://arxiv.org/abs/2010.12408)）
+    10. SuperGAT（原论文 [How to Find Your Friendly Neighborhood: Graph Attention Design with Self-Supervision](https://pytorch-geometric.readthedocs.io/en/latest/_modules/torch_geometric/nn/conv/supergat_conv.html#SuperGATConv)）
     10. （另需注意：本项目也实现了C&S模型，但是在 `experiment()` 函数中直接进行了post-processing，就不在这一部分。对C&S模型的实现可参考 `examples/simple_cs_example.py` 文件）
 6. `submodule utils`：一些实用的函数
     1. 数据集划分，即在 `data` 中增加 `train / val / test mask`（`y=-1` 即认为是无标签节点，不参与数据集划分）
