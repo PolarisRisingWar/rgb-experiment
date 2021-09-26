@@ -5,13 +5,16 @@ import sys
 sys.path.extend(['whj_code2/integration_experiment'])
 from rgb_experiment import experiment
 
-#experiment函数可以自动通过RD2PD类传参，不需要显示调用RD2PD类
-model_init_param={'num_layers': 3, 'hidden_unit': 64, 'dropout_rate': 0.5}
-model_name='mlp'
+#experiment函数可以自动通过RD2PD类传参，不需要显式调用RD2PD类
+model_init_param={'hidden_dim':8,'heads':8,'dropout_rate':0.6,'edge_sample_ratio':0.8,'neg_sample_ratio':0.5}
+model_name='supergat'
 dataset_name='cora'
 
 acc_dict=experiment(model_init_param=model_init_param,dataset_name=dataset_name,
-                    dataset_split_mode='ratio',model_name=model_name,check_data_valid=False)
+                    dataset_split_mode='random',model_name=model_name,
+                    learning_rate=0.005,epoch=500,num_train_per_class=20,
+                    num_val=500,num_test=1000,weight_decay=0.008228864973,
+                    supergat_graph_lambda=11.34657453,dataset_split_seed=19911225)
 print(acc_dict['ACC'])  #输出accuracy值
 
-#输出结果示例：0.7097966728280961（可能每次运行得到的结果都不同）
+#输出结果示例：0.796（可能每次运行得到的结果都不同）

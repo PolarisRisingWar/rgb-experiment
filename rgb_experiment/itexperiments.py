@@ -9,7 +9,7 @@ from torch.nn import Module
 from .visualize_feature import visualize_feature
 from .initial_params import InitialParameters
 from .rd2pd import RD2PD
-from .models import MLP,GCN,GraphSAGE,GAT,GGNN,APPNPStack,GraphSAGE2,PTA,DAGNN
+from .models import MLP,GCN,GraphSAGE,GAT,GGNN,APPNPStack,GraphSAGE2,PTA,DAGNN,SuperGAT
 from .utils import get_whole_mask,get_classification_mask,get_random_mask
 
 import torch
@@ -51,10 +51,11 @@ def experiment(model_init_param:dict,*,
                 normalize_feature:str=None,normalize_feature_method:str=None,
                 pta_loss_decay:float=0.05,
                 pta_weight_decay:float=0.005,
+                supergat_graph_lambda:float=4,
                 cuda_index:int=0,use_cpu:bool=False,
                 need_to_reappear:bool=False,reappear_seed:int=14530529,
                 model_name:str='MLP',
-                learning_rate:float=0.1,
+                learning_rate:float=0.1,weight_decay:float=0,
                 epoch:int=50,
                 early_stopping:int=10,
                 early_stopping_criterion:str='acc',
@@ -367,11 +368,14 @@ def experiment(model_init_param:dict,*,
                         model_init_param['alpha'],device)
 
         model=PTA(nfeat=input_dim,nclass=output_dim,**model_init_param)
+    elif model_name=='supergat':
+        model=SuperGAT(input_dim=input_dim,output_dim=output_dim,**model_init_param)
+        model_forward_param={'x':features,'edge_index':data.edge_index}
 
         
     
     model.to(device)
-    optimizer=torch.optim.Adam(model.parameters(),lr=learning_rate)
+    optimizer=torch.optim.Adam(model.parameters(),lr=learning_rate,weight_decay=weight_decay)
     #TODO:optimizer也作为可选超参
 
     if hasattr(model,'loss_function'):
@@ -406,8 +410,13 @@ def experiment(model_init_param:dict,*,
             loss = pta_loss_decay * model.loss_function(y_hat = output, y_soft = y_soft_train, 
                     epoch = i) + pta_weight_decay * torch.sum(model.Linear1.weight ** 2) / 2
         else:
-            out=model(**model_forward_param)['out']
+            model_out=model(**model_forward_param)
+            out=model_out['out']
             loss=criterion(out[train_mask],y[train_mask])
+
+            if model_name=='supergat':
+                loss += supergat_graph_lambda * model_out['att_loss']
+
             train_accs.append(compare_pred_label(out[train_mask].max(dim=1)[1],y[train_mask],
                             need_all_metrics)['ACC'])
 
@@ -442,11 +451,15 @@ def experiment(model_init_param:dict,*,
             val_acc=val_dict['ACC']
             val_accs.append(val_acc)
             val_loss=criterion(val_dict['test_op'][val_mask],y[val_mask])
+            if model_name=='supergat':
+                val_loss+=supergat_graph_lambda*(val_dict['pure_out']['att_loss'].item())
             val_losses.append(val_loss.item())
 
             test_dict=test(model,model_forward_param,y,test_mask,need_all_metrics)
             test_accs.append(test_dict['ACC'])
             test_loss=criterion(test_dict['test_op'][test_mask],y[test_mask])
+            if model_name=='supergat':
+                test_loss+=supergat_graph_lambda*(test_dict['pure_out']['att_loss'].item())
             test_losses.append(test_loss.item())
 
         #早停
@@ -600,7 +613,7 @@ def test(model,x,y,mask,need_all_metrics):
     return {'ACC':metric_result['ACC'],'test_op':out,
     'precision_score':metric_result['precision_score'],
     'recall_score':metric_result['recall_score'],'f1_score':metric_result['f1_score'],
-    'pred':pred,'label':label,'emb':pure_out['emb']}
+    'pred':pred,'label':label,'emb':pure_out['emb'],'pure_out':pure_out}
 
 
 
