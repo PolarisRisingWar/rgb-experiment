@@ -11,10 +11,8 @@ model_name='supergat'
 dataset_name='cora'
 
 acc_dict=experiment(model_init_param=model_init_param,dataset_name=dataset_name,
-                    dataset_split_mode='random',model_name=model_name,
-                    learning_rate=0.005,epoch=500,num_train_per_class=20,
-                    num_val=500,num_test=1000,weight_decay=0.008228864973,
-                    supergat_graph_lambda=11.34657453,dataset_split_seed=19911225)
+                    dataset_split_mode='ratio',model_name=model_name,
+                    learning_rate=0.005,epoch=500)
 print(acc_dict['ACC'])  #输出accuracy值
 
-#输出结果示例：0.796（可能每次运行得到的结果都不同）
+#输出结果示例：0.856353591160221（可能每次运行得到的结果都不同）

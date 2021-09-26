@@ -12,3 +12,64 @@ Wisconsin	0.786	0.473	0.763	0.451	0.729	0.498	0.773	0.524	0.508	0.741
 Texas	0.55	0.555	0.734	0.453	0.689	0.384	0.813	0.539	0.561	0.516
 Cornell	0.587	0.537	0.695	0.418	0.571	0.505	0.629	0.547	0.537	0.6
 ogbn_arxiv	0.542	0.704	0.693	0.697	0.692	0.7	0.695	0.578	0.679	0.74
+
+SuperGAT，所有数据集，有向图转为无向图，5-2-3, 只跑1次:
+Github	0.862
+Elliptic	0.8
+Film	0.28
+Wiki	0.141
+Weibo	0.893
+bgp	0.514
+ssn5	OOM
+ssn7	OOM
+Wisconsin	0.431
+Texas	0.447
+Cornell	0.447
+ogbn_arxiv	OOM
+
+
+SuperGAT，所有数据集，有向图转为无向图，5-2-3, 只跑1次:
+Github	0.855
+Elliptic	0.804
+Film	0.275
+Wiki	0.112
+Weibo	0.882
+bgp	0.498
+ssn5	OOM
+ssn7	OOM
+Wisconsin	0.569
+Texas	0.5
+Cornell	0.579
+ogbn_arxiv	OOM
+
+
+SuperGAT，所有数据集，有向图转为无向图，5-2-3, 只跑1次:
+Github
+SuperGAT，所有数据集，有向图转为无向图，5-2-3, 只跑1次:
+Github
+SuperGAT，所有数据集，有向图转为无向图，5-2-3, 只跑1次:
+Github
+SuperGAT，所有数据集，有向图转为无向图，5-2-3, 只跑1次:
+Github
+SuperGAT，所有数据集，有向图转为无向图，5-2-3, 只跑1次:
+Github
+SuperGAT，所有数据集，有向图转为无向图，5-2-3, 只跑1次:
+Github	0.86
+Elliptic
+SuperGAT，所有数据集，有向图转为无向图，5-2-3, 只跑1次:
+cora	0.847
+citeseer	0.77
+pubmed	0.834
+Github
+SuperGAT，所有数据集，有向图转为无向图，5-2-3, 只跑1次:
+Wiki	0.235
+
+
+SuperGAT，所有数据集，有向图转为无向图，5-2-3, 只跑1次:
+bgp	0.493
+
+
+SuperGAT，所有数据集，有向图转为无向图，5-2-3, 10种数据划分:
+Github
+SuperGAT，所有数据集，有向图转为无向图，5-2-3, 10种数据划分:
+Github

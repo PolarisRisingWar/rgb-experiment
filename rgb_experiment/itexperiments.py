@@ -402,6 +402,7 @@ def experiment(model_init_param:dict,*,
     test_losses=[]
 
     for i in range(epoch):
+        
         model.train()
         optimizer.zero_grad()
         
@@ -451,16 +452,15 @@ def experiment(model_init_param:dict,*,
             val_acc=val_dict['ACC']
             val_accs.append(val_acc)
             val_loss=criterion(val_dict['test_op'][val_mask],y[val_mask])
-            if model_name=='supergat':
-                val_loss+=supergat_graph_lambda*(val_dict['pure_out']['att_loss'].item())
             val_losses.append(val_loss.item())
 
             test_dict=test(model,model_forward_param,y,test_mask,need_all_metrics)
             test_accs.append(test_dict['ACC'])
             test_loss=criterion(test_dict['test_op'][test_mask],y[test_mask])
-            if model_name=='supergat':
-                test_loss+=supergat_graph_lambda*(test_dict['pure_out']['att_loss'].item())
             test_losses.append(test_loss.item())
+        
+        #if i%10==0:
+        #    print('第 '+str(i)+' epoch '+str(test_dict['ACC']))
 
         #早停
         if i==0:
@@ -489,6 +489,7 @@ def experiment(model_init_param:dict,*,
                 early_stopping_count+=1
                 if early_stopping_count>early_stopping:
                     break
+        
     
     model.load_state_dict(best_model)
 

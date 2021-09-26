@@ -25,3 +25,35 @@ Texas	0.524	0.4	0.632	0.497	0.618	0.5	0.666	0.524	0.561	0.503
 Cornell	0.558	0.353	0.579	0.458	0.584	0.479	0.639	0.621	0.611	0.413
 Pokec_z	0.576	0.587	0.59	0.565	0.596	0.575	0.595	0.517	0.517	0.538
 ogbn_arxiv	0.539	0.594	0.603	0.606	0.614	0.579	0.6	0.477	0.527	0.617
+
+
+SuperGAT，所有数据集，保持原边方向，5-2-3, 只跑1次:
+cora	0.842
+citeseer	0.742
+pubmed	0.626
+Github	0.845
+Elliptic	0.803
+Film	0.284
+Wiki	0.291
+Clothing	OOM
+Electronics	OOM
+Dblp	OOM
+Yelpchi	OOM
+Alpha	0.927
+Weibo	0.928
+bgp	0.482
+ssn5	0.789
+ssn7	0.794
+chameleon	0.439
+squirrel	0.224
+Aids	0.627
+Nba	0.625
+Wisconsin	0.529
+Texas	0.632
+Cornell	0.579
+Pokec_z	0.512
+ogbn_arxiv	OOM
+
+
+SuperGAT，所有数据集，有向图转为无向图，5-2-3, 10种数据划分:
+cora
