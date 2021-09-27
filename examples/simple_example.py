@@ -12,7 +12,7 @@ dataset_name='cora'
 
 acc_dict=experiment(model_init_param=model_init_param,dataset_name=dataset_name,
                     dataset_split_mode='ratio',model_name=model_name,
-                    learning_rate=0.005,epoch=500)
+                    learning_rate=0.005,epoch=500,print_pics=True,vis_feat=True)
 print(acc_dict['ACC'])  #输出accuracy值
 
 #输出结果示例：0.856353591160221（可能每次运行得到的结果都不同）

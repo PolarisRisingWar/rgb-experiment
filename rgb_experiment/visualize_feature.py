@@ -15,7 +15,7 @@ def visualize_feature(x,
                     pic_name='pic1.png',
                     title="可视化特征图像"):
     """绘制x的PCA二维可视化图像。如果有y的话就按照对应的标签来绘制颜色"""
-    font = FontProperties(fname=InitialParameters.simhei_ttf_path)
+    font = FontProperties(fname=InitialParameters.tnr_ttf_path)
     plt.rcParams['axes.unicode_minus'] = False #用来正常显示负号
 
     if isinstance(x,Tensor):

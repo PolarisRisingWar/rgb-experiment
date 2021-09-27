@@ -73,3 +73,17 @@ SuperGAT，所有数据集，有向图转为无向图，5-2-3, 10种数据划分
 Github
 SuperGAT，所有数据集，有向图转为无向图，5-2-3, 10种数据划分:
 Github
+SuperGAT，所有数据集，有向图转无向图，5-2-3, 10种数据划分:
+Github	0.856
+Elliptic	0.801
+Film	0.264
+Wiki	0.124
+Weibo	0.856
+bgp	0.491
+ssn5	OOM
+ssn7	OOM
+Wisconsin	0.488
+Texas	0.564
+Cornell	0.561
+ogbn_arxiv	OOM
+

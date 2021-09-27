@@ -521,26 +521,27 @@ def experiment(model_init_param:dict,*,
         metric_result=compare_pred_label(pred,label,need_all_metrics)
     
     if print_pics:
-        font = FontProperties(fname=InitialParameters.simhei_ttf_path)
+        font = FontProperties(fname=InitialParameters.tnr_ttf_path)
         plt.rcParams['axes.unicode_minus'] = False
+        plt.rcParams['font.sans-serif'] = ['Noto Serif CJK JP']
 
         #TODO:plt.title内容也可以作为入参传入
         if specify_data:
             dataset_name=''
-        plt.title(dataset_name+'数据集在'+model_name+'模型上的loss',fontproperties=font)
+        plt.title(dataset_name+' dataset on '+model_name+' model loss',fontproperties=font)
         plt.plot(train_losses, label="training loss")
         plt.plot(val_losses, label="validating loss")
         plt.plot(test_losses, label="testing loss")
-        plt.legend()
+        plt.legend(prop=font)
         plt.savefig(pics_root+'/loss_'+pics_name)
         plt.close()
         #如果不加这句的话，如果print_pics和vis_feat同时置True，可视化特征的图上就会出现这边的图
 
-        plt.title(dataset_name+'数据集在'+model_name+'模型上的ACC',fontproperties=font)
+        plt.title(dataset_name+' dataset on '+model_name+' model ACC ',fontproperties=font)
         plt.plot(train_accs, label="training acc")
         plt.plot(val_accs, label="validating acc")
         plt.plot(test_accs, label="testing acc")
-        plt.legend()
+        plt.legend(prop=font)
         plt.savefig(pics_root+'/acc_'+pics_name)
         plt.close()
     
@@ -578,13 +579,13 @@ def experiment(model_init_param:dict,*,
         
         #输出初始特征
         visualize_feature(data.x,data.y,pics_root,feat_pic_names_prefix+'_initial_feature.png',
-                        dataset_name+'数据集上的初始特征')
+                        dataset_name+' dataset initial feature')
 
         #输出全部数据在best_model上的嵌入向量
         visualize_feature(metric_result['emb'],data.y,pics_root,
                         feat_pic_names_prefix+'_embedding.png',
-                        dataset_name+'数据集在'+model_name+ \
-                        '模型上运行后的特征（ACC为'+str(round(metric_result['ACC'],3))+'）')
+                        dataset_name+' dataset '+model_name+ \
+                        ' model final embedding '+str(round(metric_result['ACC'],3))+'')
 
     return {'ACC':metric_result['ACC'],'precision_score':metric_result['precision_score'],
     'recall_score':metric_result['recall_score'],'f1_score':metric_result['f1_score']}
