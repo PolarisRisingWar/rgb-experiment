@@ -74,7 +74,8 @@ def experiment(model_init_param:dict,*,
                 need_all_metrics:bool=True,
                 f1_average:str='macro',
                 loss_func_hp:dict=None,print_print:bool=True,
-                specify_model:bool=True,model:Module=None):
+                specify_model:bool=True,model:Module=None,
+                begin_early_stopping:int=20):
     """
     入参：
     必写：
@@ -180,6 +181,8 @@ def experiment(model_init_param:dict,*,
                 split_seed=dataset_split_seed,num_train_per_class=num_train_per_class,
                 num_val=num_val,num_test=num_test)
         data=dataset.data
+        #print(data)
+        #print(data.x[10])
     else:
         data=data.clone()  #这个是为了防止后续对data的处理工作影响原数据
         assert type(data)==Data  #理论上说不是也行但是我没考虑这种情况
@@ -392,7 +395,7 @@ def experiment(model_init_param:dict,*,
     early_stopping_count=0
     before_lowest_val_loss=0
     before_highest_val_acc=0
-    #TODO:增加用acc+loss来进行早停的功能
+    #TODO:增加用acc+loss来进行早停的功能（类似APPNP的实验设置）
     val_accs=[]
     val_losses=[]
     best_model={}
@@ -474,7 +477,7 @@ def experiment(model_init_param:dict,*,
                 best_model=deepcopy(model.state_dict())
                 if model_name=='pta':
                     best_metric_result=deepcopy(metric_result)
-            elif implement_early_stopping:
+            elif implement_early_stopping and i>begin_early_stopping:
                 early_stopping_count+=1
                 if early_stopping_count>early_stopping:
                     break
@@ -485,7 +488,7 @@ def experiment(model_init_param:dict,*,
                 best_model=deepcopy(model.state_dict())
                 if model_name=='pta':
                     best_metric_result=deepcopy(metric_result)
-            elif implement_early_stopping:
+            elif implement_early_stopping and i>begin_early_stopping:
                 early_stopping_count+=1
                 if early_stopping_count>early_stopping:
                     break

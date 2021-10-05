@@ -84,3 +84,8 @@ Cornell	0.523
 Pokec_z	0.493
 ogbn_arxiv	OOM
 
+
+Elliptic，所有模型，不改变边方向，5-2-3, 10种数据划分:
+	MLP	GCN	GraphSAGE	GAT	GGNN	APPNPStack	GraphSAGE2	PTA	DAGNN	SuperGAT	C&S	
+Elliptic	0.95	0.92	0.946	0.954	0.976	0.91	0.954	0.912	0.927	0.897	0.943
+

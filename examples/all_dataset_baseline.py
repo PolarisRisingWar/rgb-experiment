@@ -4,10 +4,10 @@
 to_un=False #如果置True则跑所有数据集上原始方向，否则跑有向图转化为无向图
 dataset_split_ratio='5-2-3'
 seed_number=10
-cuda_index=1
+cuda_index=3
 learning_rate=0.01
 epoch=300
-first_sentence='SuperGAT，所有数据集，有向图转无向图，5-2-3, 10种数据划分'
+first_sentence='Elliptic，所有模型，有向图转无向图，5-2-3, 10种数据划分'
 output_file='whj_code2/integration_experiment/examples/adb_output2.out'
 
 #包导入
@@ -34,19 +34,19 @@ file_handle=open(output_file,mode='a')  #追加
 file_handle.write('\n')
 file_handle.write(first_sentence+':\n')
 dn_list=all_dataset if to_un else directed_dataset
-"""
+
 file_handle.write('\t')
 for m in model_list:
     file_handle.write(m+'\t')
 file_handle.write('C&S\t')
 file_handle.write('\n')
-"""
-for dn in range(len(dn_list)):  #遍历数据集
+
+for dn in [1]:  #遍历数据集
     d=dn_list[dn]
     file_handle.write(d)
     #通过specify_data看看能不能加快代码运行的速度
     data=RD2PD(dataset_name=d,dataset_root=dataset_root).data
-    for i in [9]:  #遍历模型
+    for i in range(len(model_list)):  #遍历模型
         acc_list=[]
         try:
             for seed in seeds:  #遍历seed_number个数据集划分
@@ -61,12 +61,12 @@ for dn in range(len(dn_list)):  #遍历数据集
                                     print_print=False)
                 acc_list.append(acc_dict['ACC'])
             file_handle.write('\t'+str(round(sum(acc_list)/seed_number,3)))
-            print(round(sum(acc_list)/seed_number,3))
+            #print(round(sum(acc_list)/seed_number,3))
         except RuntimeError:  #一般来说就是OOM了……
             file_handle.write('\tOOM')
     
     #MLP+C&S
-    """
+    
     acc_list=[]
     for seed in seeds:  #遍历seed_number个数据集划分
         acc_dict=experiment(model_init_param={'num_layers':3,'hidden_unit':64,'dropout_rate':0.5},
@@ -79,7 +79,7 @@ for dn in range(len(dn_list)):  #遍历数据集
                             print_print=False)
         acc_list.append(acc_dict['ACC'])
     file_handle.write('\t'+str(round(sum(acc_list)/seed_number,3)))
-    """
+    
 
     file_handle.write('\n')
 

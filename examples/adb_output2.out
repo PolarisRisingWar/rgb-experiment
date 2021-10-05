@@ -87,3 +87,8 @@ Texas	0.564
 Cornell	0.561
 ogbn_arxiv	OOM
 
+
+Elliptic，所有模型，有向图转无向图，5-2-3, 10种数据划分:
+	MLP	GCN	GraphSAGE	GAT	GGNN	APPNPStack	GraphSAGE2	PTA	DAGNN	SuperGAT	C&S	
+Elliptic	0.947	0.94	0.959	0.963	0.976	0.942	0.96	0.939	0.967	0.902	0.955
+
