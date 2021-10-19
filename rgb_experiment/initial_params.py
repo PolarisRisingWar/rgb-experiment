@@ -20,7 +20,7 @@ class InitialParameters:
     #注意以下两个参数之间是要一一对应的，之所以没合一起主要是因为那样就太长了
     #9个模型+C&S
     model_names=['MLP','GCN','GraphSAGE','GAT','GGNN','APPNPStack','GraphSAGE2','PTA',
-                'DAGNN','SuperGAT']
+                'DAGNN','SuperGAT','SGC']
     default_init_params=[{'num_layers': 3, 'hidden_unit': 64, 'dropout_rate': 0.5},
                         {'num_layers': 2, 'hidden_unit': 64, 'dropout_rate': 0.5},
                         {'num_layers': 2, 'hidden_unit': 64, 'dropout_rate': 0.5},
@@ -30,9 +30,11 @@ class InitialParameters:
                         {'num_layers': 2, 'hidden_unit': 64, 'dropout_rate': 0.5},
                         {'nhid':64,'dropout':0,'epsilon':100,'mode':2,'K':10,'alpha':0.1},
                         {'hidden_dim':64,'K':10,'dropout_rate':0.5},
-                        {'hidden_dim':8,'heads':8,'dropout_rate':0.6,'edge_sample_ratio':0.8,'neg_sample_ratio':0.5}]
+                        {'hidden_dim':8,'heads':8,'dropout_rate':0.6,'edge_sample_ratio':0.8,'neg_sample_ratio':0.5},
+                        {'K':2}]
     #APPNP的α和K都是原论文的设置，PTA, DAGNN的参数都来自原论文的GitHub项目
     #SuperGAT的超参参考自https://github.com/pyg-team/pytorch_geometric/blob/master/examples/super_gat.py
+    #SGC的超参设成2是因为我调了几个数据集综合起来感觉2的表现真的不错
 
     default_cs_param={'num_correction_layers': 50, 'correction_alpha': 0.8, 'num_smoothing_layers': 50, 'smoothing_alpha': 0.8, 'autoscale': True}
     #参数参考自：

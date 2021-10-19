@@ -8,3 +8,4 @@ from rgb_experiment.models.appnp_stack import APPNPStack
 from rgb_experiment.models.pta import PTA
 from rgb_experiment.models.dagnn import DAGNN
 from rgb_experiment.models.supergat import SuperGAT
+from rgb_experiment.models.sgc import SGC
