@@ -9,7 +9,7 @@ from torch.nn import Module
 from .visualize_feature import visualize_feature
 from .initial_params import InitialParameters
 from .rd2pd import RD2PD
-from .models import MLP,GCN,GraphSAGE,GAT,GGNN,APPNPStack,GraphSAGE2,PTA,DAGNN,SuperGAT,SGC
+from .models import MLP,GCN,GraphSAGE,GAT,GGNN,APPNPStack,GraphSAGE2,PTA,DAGNN,SuperGAT,SGC,GIN
 from .utils import get_whole_mask,get_classification_mask,get_random_mask
 
 import torch
@@ -377,6 +377,9 @@ def experiment(model_init_param:dict,*,
     elif model_name=='sgc':
         model=SGC(input_dim=input_dim,output_dim=output_dim,**model_init_param)
         model_forward_param={'x':features,'edge_index':data.edge_index}
+    elif model_name=='gin':
+        model=GIN(input_dim=input_dim,output_dim=output_dim,**model_init_param)
+        model_forward_param={'x':features,'edge_index':data.edge_index}
 
         
     
@@ -596,6 +599,7 @@ def experiment(model_init_param:dict,*,
     return {'ACC':metric_result['ACC'],'precision_score':metric_result['precision_score'],
     'recall_score':metric_result['recall_score'],'f1_macro':metric_result['f1_macro'],
     'f1_micro':metric_result['f1_micro']}
+    #TODO:支持对各种指标计算形式的支持，把这个格式改得更优雅些（跟底下两个函数再次解耦）
     
 
 
@@ -624,6 +628,7 @@ def test(model,x,y,mask,need_all_metrics):
     'recall_score':metric_result['recall_score'],'f1_macro':metric_result['f1_macro'],
     'f1_micro':metric_result['f1_micro'],
     'pred':pred,'label':label,'emb':pure_out['emb'],'pure_out':pure_out}
+    
 
 
 

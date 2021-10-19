@@ -9,3 +9,4 @@ from rgb_experiment.models.pta import PTA
 from rgb_experiment.models.dagnn import DAGNN
 from rgb_experiment.models.supergat import SuperGAT
 from rgb_experiment.models.sgc import SGC
+from rgb_experiment.models.gin import GIN
