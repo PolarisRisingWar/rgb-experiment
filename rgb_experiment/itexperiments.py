@@ -9,7 +9,7 @@ from torch.nn import Module
 from .visualize_feature import visualize_feature
 from .initial_params import InitialParameters
 from .rd2pd import RD2PD
-from .models import MLP,GCN,GraphSAGE,GAT,GGNN,APPNPStack,GraphSAGE2,PTA,DAGNN,SuperGAT
+from .models import MLP,GCN,GraphSAGE,GAT,GGNN,APPNPStack,GraphSAGE2,PTA,DAGNN,SuperGAT,SGC,GIN
 from .utils import get_whole_mask,get_classification_mask,get_random_mask
 
 import torch
@@ -374,6 +374,12 @@ def experiment(model_init_param:dict,*,
     elif model_name=='supergat':
         model=SuperGAT(input_dim=input_dim,output_dim=output_dim,**model_init_param)
         model_forward_param={'x':features,'edge_index':data.edge_index}
+    elif model_name=='sgc':
+        model=SGC(input_dim=input_dim,output_dim=output_dim,**model_init_param)
+        model_forward_param={'x':features,'edge_index':data.edge_index}
+    elif model_name=='gin':
+        model=GIN(input_dim=input_dim,output_dim=output_dim,**model_init_param)
+        model_forward_param={'x':features,'edge_index':data.edge_index}
 
         
     
@@ -591,7 +597,9 @@ def experiment(model_init_param:dict,*,
                         ' model final embedding '+str(round(metric_result['ACC'],3))+'')
 
     return {'ACC':metric_result['ACC'],'precision_score':metric_result['precision_score'],
-    'recall_score':metric_result['recall_score'],'f1_score':metric_result['f1_score']}
+    'recall_score':metric_result['recall_score'],'f1_macro':metric_result['f1_macro'],
+    'f1_micro':metric_result['f1_micro']}
+    #TODO:支持对各种指标计算形式的支持，把这个格式改得更优雅些（跟底下两个函数再次解耦）
     
 
 
@@ -617,8 +625,10 @@ def test(model,x,y,mask,need_all_metrics):
 
     return {'ACC':metric_result['ACC'],'test_op':out,
     'precision_score':metric_result['precision_score'],
-    'recall_score':metric_result['recall_score'],'f1_score':metric_result['f1_score'],
+    'recall_score':metric_result['recall_score'],'f1_macro':metric_result['f1_macro'],
+    'f1_micro':metric_result['f1_micro'],
     'pred':pred,'label':label,'emb':pure_out['emb'],'pure_out':pure_out}
+    
 
 
 
@@ -639,14 +649,15 @@ def compare_pred_label(pred,label,need_all_metrics):
         precision_score=metrics.precision_score(l, p, average='macro',zero_division=0)
         recall_score=metrics.recall_score(l, p, average='macro',zero_division=0)
         #print(tm.f1_average)
-        f1_score=metrics.f1_score(l, p, average=tm.f1_average,zero_division=0)
+        f1_macro=metrics.f1_score(l, p, average='macro',zero_division=0)
+        f1_micro=metrics.f1_score(l, p, average='micro',zero_division=0)
     else:
         precision_score=0
         recall_score=0
         f1_score=0
 
     return {'ACC':accuracy,'precision_score':precision_score,
-    'recall_score':recall_score,'f1_score':f1_score}
+    'recall_score':recall_score,'f1_macro':f1_macro,'f1_micro':f1_micro}
 
 
 
