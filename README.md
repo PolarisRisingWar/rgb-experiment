@@ -65,16 +65,17 @@ edge_index.npy（边，`np.save()` 结果，要求元素数据格式为float。�
 已可用的模型含：（以下按模型名字母顺序排序。模型的具体结构可参考对应代码）
     1. APPNPStack（APPNP模型，原论文 [Predict then Propagate: Graph Neural Networks meet Personalized PageRank](https://arxiv.org/abs/1810.05997)）
     2. DAGNN（原论文 [Towards Deeper Graph Neural Networks](https://www.kdd.org/kdd2020/accepted-papers/view/towards-deeper-graph-neural-networks)）
+    3. FAGCN（原论文 [Beyond Low-frequency Information in Graph Convolutional Networks](https://arxiv.org/pdf/2101.00797.pdf)）
     3. GAT（原论文 [Graph Attention Networks](https://arxiv.org/abs/1710.10903)）
     4. GCN（原论文 [Semi-supervised Classification with Graph Convolutional Networks](https://arxiv.org/abs/1609.02907)）
     5. GGNN（原论文 [Gated Graph Sequence Neural Networks](https://arxiv.org/abs/1511.05493)）
+    12. GIN（原论文 [how powerful are graph neural networks?](https://arxiv.org/pdf/1810.00826.pdf)）
     6. GraphSAGE（原论文 [Inductive Representation Learning on Large Graphs](https://arxiv.org/abs/1706.02216)）（应用 `torch_geometric.nn.MessagePassing` 基类实现卷积层）
     7. GraphSAGE2（同GraphSAGE）（应用 `torch_geometric.nn.SAGEConv` 类作为卷积层，在较大的数据集上有OOM的问题）
     8. MLP
     9. PTA（原论文 [On the Equivalence of Decoupled Graph Convolution Network and Label Propagation](https://arxiv.org/abs/2010.12408)）
-    10. SuperGAT（原论文 [How to Find Your Friendly Neighborhood: Graph Attention Design with Self-Supervision](https://openreview.net/pdf?id=Wi5KUNlqWty)）
     11. SGC（原论文 [Simplifying Graph Convolutional Networks](https://arxiv.org/pdf/1902.07153.pdf)）
-    12. GIN（原论文 [how powerful are graph neural networks?](https://arxiv.org/pdf/1810.00826.pdf)）
+    10. SuperGAT（原论文 [How to Find Your Friendly Neighborhood: Graph Attention Design with Self-Supervision](https://openreview.net/pdf?id=Wi5KUNlqWty)）
     10. （另需注意：本项目也实现了C&S模型，但是在 `experiment()` 函数中直接进行了post-processing，就不在这一部分。对C&S模型的实现可参考 `examples/simple_cs_example.py` 文件）
 6. `submodule utils`：一些实用的函数
     1. 数据集划分，即在 `data` 中增加 `train / val / test mask`（`y=-1` 即认为是无标签节点，不参与数据集划分）

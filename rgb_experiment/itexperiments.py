@@ -9,7 +9,8 @@ from torch.nn import Module
 from .visualize_feature import visualize_feature
 from .initial_params import InitialParameters
 from .rd2pd import RD2PD
-from .models import MLP,GCN,GraphSAGE,GAT,GGNN,APPNPStack,GraphSAGE2,PTA,DAGNN,SuperGAT,SGC,GIN
+from .models import MLP,GCN,GraphSAGE,GAT,GGNN,APPNPStack,GraphSAGE2,PTA,DAGNN,SuperGAT,SGC, \
+                    GIN,FAGCN
 from .utils import get_whole_mask,get_classification_mask,get_random_mask
 
 import torch
@@ -379,6 +380,9 @@ def experiment(model_init_param:dict,*,
         model_forward_param={'x':features,'edge_index':data.edge_index}
     elif model_name=='gin':
         model=GIN(input_dim=input_dim,output_dim=output_dim,**model_init_param)
+        model_forward_param={'x':features,'edge_index':data.edge_index}
+    elif model_name=='fagcn':
+        model=FAGCN(input_dim=input_dim,output_dim=output_dim,**model_init_param)
         model_forward_param={'x':features,'edge_index':data.edge_index}
 
         
