@@ -6,16 +6,16 @@ import torch
 sys.path.extend(['whj_code2/integration_experiment'])
 from rgb_experiment import experiment
 
-from torch_geometric.datasets import WebKB
+from torch_geometric.datasets import Planetoid
 
 #导入Data数据
-ds_path='/data/wanghuijuan/dataset1/pyg_ds'
-dataset=WebKB(ds_path,"Cornell")
+ds_path='data'
+dataset=Planetoid(ds_path,"Cora")
 print(dataset)
 data=dataset.data
-data.train_mask=data.train_mask[:,0]
-data.val_mask=data.val_mask[:,0]
-data.test_mask=data.test_mask[:,0]
+#data.train_mask=data.train_mask[:,0]
+#data.val_mask=data.val_mask[:,0]
+#data.test_mask=data.test_mask[:,0]
 #print(data.train_mask.size()==torch.Size([data.num_nodes]))
 #print(len(data.train_mask.size()))
 #print(data.train_mask.size()[0])

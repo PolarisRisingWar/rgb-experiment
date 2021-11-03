@@ -7,13 +7,14 @@ import numpy as np
 import torch
 
 from torch_geometric.data import Data
-from torch_geometric.utils import remove_self_loops
+from torch_geometric.utils import remove_self_loops,add_remaining_self_loops
 
 from torch_sparse import coalesce
 
 import random
 
-from .utils import get_whole_mask,get_classification_mask,get_random_mask,node_induced_subgraph
+from .utils import get_whole_mask,get_classification_mask,get_random_mask,\
+                    node_induced_subgraph
 
 
 class RD2PD():
@@ -25,6 +26,7 @@ class RD2PD():
             split_method:str='ratio',split_seed=1234567,split_ratio:str='6-2-2',
             num_train_per_class:int=20,num_val:int=500,num_test:int=1000,
             remove_duplicate_edges:bool=False,remove_self_loop:bool=False,
+            add_remaining_self_loop:bool=False,
             remove_non_label_node:bool=False,specify_non_label_mask:bool=False,
             apply_sample:bool=False,sample_seed=1234567,
             sample_method:str='random',
@@ -85,6 +87,8 @@ class RD2PD():
         numpy_edge_index=np.load(dataset_root+'/'+dataset_name+'/edge_index.npy')
         edge_index=torch.from_numpy(numpy_edge_index).to(torch.long)
 
+        self.num_nodes=x.size()[0]
+
         if remove_duplicate_edges:
             edge_index, _ = coalesce(edge_index, None, x.size(0), x.size(0))
         #看whj_code2/whj_dataset1/zjutoid2/wikipedianetwork.py的效果感觉是去掉重边的意思
@@ -93,8 +97,10 @@ class RD2PD():
             edge_index, _ = remove_self_loops(edge_index)
         #参考自torch_geometric.datasets.Planetoid部分的代码
 
-        self.num_nodes=x.size()[0]
+        if add_remaining_self_loop:
+            edge_index,_=add_remaining_self_loops(edge_index,num_nodes=self.num_nodes)
 
+        
         if remove_non_label_node:
             have_label_mask=y!=-1
             x=x[have_label_mask]

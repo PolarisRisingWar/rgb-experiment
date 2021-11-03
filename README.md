@@ -38,8 +38,8 @@ from rgb_experiment import experiment
 1. experiment()函数中数据的默认路径可通过initial_params.py中 `default_data_path` 参数修改。
 2. 符合 `RD2PD` 类要求的图数据集原始数据：可直接将文件根目录路径传入 `experiment()`
 目录下至少应装载如下数据：
-> x.npy（节点特征，`np.save()` 结果，要求元素数据格式为整数，尺寸为 `[num_node, feature_dim]`）
-y.npy（节点标签，`np.save()` 结果，要求元素数据格式为整数，尺寸为 `[num_node]`，元素为-1时表示无标签节点）
+> x.npy（节点特征，`np.save()` 结果，要求元素数据格式为整数，尺寸为 `[num_node, feature_dim]`）<br>
+y.npy（节点标签，`np.save()` 结果，要求元素数据格式为整数，尺寸为 `[num_node]`，元素为-1时表示无标签节点）<br>
 edge_index.npy（边，`np.save()` 结果，要求元素数据格式为float。无向图的尺寸为 `[2, 2*num_edge]`，有向图的尺寸为 `[2,num_edge]`。在代码中是通过该变量调用 `torch_geometric` 的API来判断一个图是否是有向图的）
 
 本项目中使用 `numpy.ndarray` 格式的数据是为了给使用PyTorch、TensorFlow等各种包的用户都提供同样简洁明了的数据格式。
